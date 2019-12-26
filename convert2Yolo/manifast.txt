@@ -1,0 +1,1 @@
+/Users/noam/convert2Yolo/Users/noam/coco/images/val2014/COCO_val2014_000000558840.jpg
