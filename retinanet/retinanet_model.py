@@ -6,7 +6,7 @@ import torch.optim as optim
 from tqdm import tqdm
 from torchvision import transforms
 from . import model
-from zazoo.dataloaders.dataloader import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
+from zoo.dataloaders.dataloader import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
     Augmenter, Normalizer
 from torch.utils.data import DataLoader
 
@@ -20,7 +20,7 @@ class RetinaModel:
     def __init__(self, device, home_path):
         self.home_path = home_path
         self.device = device
-        this_path = os.path.join(os.getcwd(), 'zazoo/retinanet')
+        this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
         self.weights_dir_path = self.last_checkpoint_path = os.path.join(this_path, 'weights')
         self.last_checkpoint_path = os.path.join(this_path, 'weights', 'last.pt')
         self.best_checkpoint_path = os.path.join(this_path, 'weights', 'best.pt')

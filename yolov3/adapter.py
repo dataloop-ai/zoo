@@ -49,10 +49,10 @@ class AdapterModel:
 
         class_names_path = os.path.join(self.home_path, "d.names")
         num_classes = sum(1 for line in open(class_names_path))
-        if os.path.exists('zazoo/yolov3/cfg/yolov3-custom.cfg'):
-            os.remove('zazoo/yolov3/cfg/yolov3-custom.cfg')
+        if os.path.exists('zoo/yolov3/cfg/yolov3-custom.cfg'):
+            os.remove('zoo/yolov3/cfg/yolov3-custom.cfg')
 
-        cmd_line = 'bash ' + 'zazoo/yolov3/cfg/create_custom_model.sh ' + str(num_classes)
+        cmd_line = 'bash ' + 'zoo/yolov3/cfg/create_custom_model.sh ' + str(num_classes)
         os.system(cmd_line)
         data = {
             "train": os.path.join(self.home_path, "train_paths.txt"),
@@ -76,8 +76,8 @@ class AdapterModel:
 def predict(home_path, checkpoint_path):
     class_names_path = os.path.join(home_path, "d.names")
     num_classes = sum(1 for line in open(class_names_path))
-    if not os.path.exists('zazoo/yolov3/cfg/yolov3-custom.cfg'):
-        cmd_line = 'bash ' + 'zazoo/yolov3/cfg/create_custom_model.sh ' + str(num_classes)
+    if not os.path.exists('zoo/yolov3/cfg/yolov3-custom.cfg'):
+        cmd_line = 'bash ' + 'zoo/yolov3/cfg/create_custom_model.sh ' + str(num_classes)
         os.system(cmd_line)
     data = {
         "predict_on": os.path.join(home_path, "predict_on"),

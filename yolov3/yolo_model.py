@@ -18,7 +18,7 @@ from .yolo_utils.parse_config import *
 
 class YoloModel:
     def __init__(self, device):
-        this_path = os.path.join(os.getcwd(), 'zazoo/yolov3')
+        this_path = os.path.join(os.getcwd(), 'zoo/yolov3')
         cfg_path = 'cfg/yolov3-custom.cfg'
         weights_path = "weights/darknet53.conv.74"
         # weights_path = ""

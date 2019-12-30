@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from zazoo.dataloaders.dataloader import CocoDataset, PredDataset, collater, Resizer, AspectRatioBasedSampler, \
+from zoo.dataloaders.dataloader import CocoDataset, PredDataset, collater, Resizer, AspectRatioBasedSampler, \
     UnNormalizer, Normalizer
 
 
