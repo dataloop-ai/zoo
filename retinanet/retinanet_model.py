@@ -37,7 +37,7 @@ class RetinaModel:
                                              transform=transforms.Compose(
                                                  [Normalizer(), Augmenter(), Resizer(min_side=resize)]))
             self.dataset_val = CocoDataset(coco_path, set_name=val_set_name,
-                                           transform=transforms.Compose([Normalizer(), Resizer()]))
+                                           transform=transforms.Compose([Normalizer(), Resizer(min_side=resize)]))
 
         elif self.dataset == 'csv':
             if csv_train is None:
@@ -54,7 +54,7 @@ class RetinaModel:
                 print('No validation annotations provided.')
             else:
                 self.dataset_val = CSVDataset(train_file=csv_val, class_list=csv_classes,
-                                              transform=transforms.Compose([Normalizer(), Resizer()]))
+                                              transform=transforms.Compose([Normalizer(), Resizer(min_side=resize)]))
         else:
             raise ValueError('Dataset type not understood (must be csv or coco), exiting.')
 
