@@ -95,14 +95,16 @@ class RetinaModel:
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
 
     def train(self, epochs=1, save=True):
+        self.tb_writer = None
+        try:
+            # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
+            from torch.utils.tensorboard import SummaryWriter
+            self.tb_writer = SummaryWriter()
+        except:
+            pass
+
         for epoch_num in range(epochs):
-            self.tb_writer = None
-            try:
-                # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
-                from torch.utils.tensorboard import SummaryWriter
-                self.tb_writer = SummaryWriter()
-            except:
-                pass
+
             print('total epochs: ', epochs)
             self.retinanet.train()
             self.retinanet.freeze_bn()
