@@ -149,6 +149,9 @@ class RetinaModel:
     def get_best_checkpoint(self):
         return torch.load(self.best_checkpoint_path)
 
+    def save_best_checkpoint(self):
+        pass
+
     def get_metrics(self):
         # TODO: does this work on coco
         mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)

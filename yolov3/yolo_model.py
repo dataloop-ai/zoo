@@ -247,6 +247,9 @@ class YoloModel:
     def get_best_checkpoint(self):
         return torch.load(self.best_checkpoint_path)
 
+    def save_best_checkpoint(self):
+        pass
+
     def get_metrics(self):
         return self.results[2]
 

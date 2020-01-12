@@ -69,6 +69,9 @@ class AdapterModel:
     def get_checkpoint(self):
         return self.yolo_model.get_best_checkpoint()
 
+    def save_checkpoint(self):
+        return self.yolo_model.save_best_checkpoint()
+
     def get_metrics(self):
         return {'val_accuracy': self.yolo_model.get_metrics().item()}
 
