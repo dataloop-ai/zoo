@@ -172,7 +172,7 @@ class RetinaModel:
         # Write Tensorboard results
         if self.tb_writer:
             x = [mloss.item()] + [results.item()]
-            titles = ['loss', 'mAP']
+            titles = ['loss', '0.5AP']
             for xi, title in zip(x, titles):
                 self.tb_writer.add_scalar(title, xi, epoch)
 

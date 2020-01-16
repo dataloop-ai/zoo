@@ -272,7 +272,7 @@ class YoloModel:
         if self.tb_writer:
             x = list(mloss) + list(results)
             titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
-                      'Precision', 'Recall', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification']
+                      'Precision', 'Recall', '0.5AP', 'F1', 'val GIoU', 'val Objectness', 'val Classification']
             for xi, title in zip(x, titles):
                 self.tb_writer.add_scalar(title, xi, epoch)
 
