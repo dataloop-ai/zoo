@@ -27,6 +27,8 @@ class RetinaModel:
         self.results_path = os.path.join(this_path, 'weights', 'results.txt')
 
         self.best_fitness = - float('inf')
+        self.tb_writer = None
+
     def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=None,
                    train_set_name='train2017', val_set_name='val2017', resize=608):
         self.dataset = dataset
@@ -72,20 +74,25 @@ class RetinaModel:
         # Create the model
 
         if depth == 18:
-            retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales, weights_dir=self.weights_dir_path,
+            retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                       weights_dir=self.weights_dir_path,
                                        pretrained=True)
         elif depth == 34:
-            retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales, weights_dir=self.weights_dir_path,
+            retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                       weights_dir=self.weights_dir_path,
                                        pretrained=True)
         elif depth == 50:
-            retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales, weights_dir=self.weights_dir_path,
+            retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                       weights_dir=self.weights_dir_path,
                                        pretrained=True)
         elif depth == 101:
-            retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales, weights_dir=self.weights_dir_path,
-                                       pretrained=True)
+            retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                        weights_dir=self.weights_dir_path,
+                                        pretrained=True)
         elif depth == 152:
-            retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales, weights_dir=self.weights_dir_path,
-                                       pretrained=True)
+            retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                        weights_dir=self.weights_dir_path,
+                                        pretrained=True)
         else:
             raise ValueError('Unsupported model depth, must be one of 18, 34, 50, 101, 152')
         self.scales = scales
@@ -94,8 +101,8 @@ class RetinaModel:
         self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
 
-    def train(self, epochs=1, save=True):
-        self.tb_writer = None
+    def train(self, epochs=100, save=True):
+
         try:
             # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
             from torch.utils.tensorboard import SummaryWriter

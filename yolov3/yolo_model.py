@@ -36,6 +36,7 @@ class YoloModel:
         self.cutoff = -1  # backbone reaches to cutoff layer
         self.start_epoch = 0
         self.best_fitness = float('inf')
+        self.tb_writer = None
 
     def train(self, data_dict, other_hyp, epochs=273, batch_size=16, accumulate=4,
               multi_scale=True, img_size=416, rect=False, resume=False, transfer=False, save=True,
@@ -48,7 +49,7 @@ class YoloModel:
         self.weights_path = self.last_checkpoint_path if resume else self.weights_path
         device = torch_utils.select_device(self.device, batch_size=batch_size)
         other_hyp['obj'] *= img_size / 416.  # scale other_hyp['obj'] by img_size (evolved at 416)
-        self.tb_writer = None
+
         try:
             # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
             from torch.utils.tensorboard import SummaryWriter
