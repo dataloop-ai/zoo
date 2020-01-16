@@ -235,8 +235,10 @@ class YoloModel:
                                                   conf_thres=0.001 if self.final_epoch and epoch > 0 else 0.1,
                                                   # 0.1 for speed
                                                   save_json=self.final_epoch and epoch > 0)
+            mAP = self.get_metrics()
+            self._write_to_tensorboard(self.results[2], mloss[3], epoch)
             if self.save:
-                self._save_checkpoint(self.results, mloss, epoch, s)
+                self._save_checkpoint(self.results, epoch, s)
             # end epoch ----------------------------------------------------------------------------------------------------
 
         # end training
@@ -264,22 +266,29 @@ class YoloModel:
             prebias = False  # disable pretrain_bias
             img_weights = a  # reset settings
 
-    def _save_checkpoint(self, results, mloss, epoch, s):
+    def _write_to_tensorboard(self, results, mloss, epoch):
+        # Write Tensorboard results
+        if self.tb_writer:
+            x = [mloss.item()] + [results.item()]
+            titles = ['Train Loss', '0.5AP']
+            for xi, title in zip(x, titles):
+                self.tb_writer.add_scalar(title, xi, epoch)
+
+        # if self.tb_writer:
+        #     x = list(mloss) + list(results)
+        #     titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
+        #               'Precision', 'Recall', '0.5AP', 'F1', 'val GIoU', 'val Objectness', 'val Classification']
+        #     for xi, title in zip(x, titles):
+        #         self.tb_writer.add_scalar(title, xi, epoch)
+
+    def _save_checkpoint(self, results, epoch, s):
 
         with open(self.results_path, 'a') as f:
             f.write(s + '%10.3g' * 7 % results + '\n')  # P, R, mAP, F1, test_losses=(GIoU, obj, cls)
 
-        # Write Tensorboard results
-        if self.tb_writer:
-            x = list(mloss) + list(results)
-            titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
-                      'Precision', 'Recall', '0.5AP', 'F1', 'val GIoU', 'val Objectness', 'val Classification']
-            for xi, title in zip(x, titles):
-                self.tb_writer.add_scalar(title, xi, epoch)
-
         # Update best mAP or lowest val GIOU, Objectness and Classification
-        fitness = sum(results[4:])  # total loss
-        if fitness < self.best_fitness:
+        fitness = self.results[2]  # get mAP
+        if fitness > self.best_fitness:
             self.best_fitness = fitness
 
         # Save training results

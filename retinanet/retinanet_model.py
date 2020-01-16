@@ -146,11 +146,12 @@ class RetinaModel:
             self.scheduler.step(np.mean(epoch_loss))
             self.final_epoch = epoch_num + 1 == epochs
 
-            if save or self.final_epoch:
-                mAP = self.get_metrics()
+            mAP = self.get_metrics()
+            self._write_to_tensorboard(mAP, np.mean(loss_hist), epoch_num)
+
             if save:
-                self._save_checkpoint(mAP, np.mean(loss_hist), epoch_num)
-            if save and self.final_epoch:
+                self._save_checkpoint(mAP, epoch_num)
+            if self.final_epoch:
                 self._save_classes_for_inference()
 
     def get_best_checkpoint(self):
@@ -174,14 +175,16 @@ class RetinaModel:
                 f.write(key)
                 f.write("\n")
 
-    def _save_checkpoint(self, results, mloss, epoch):
+    def _write_to_tensorboard(self, results, mloss, epoch):
 
         # Write Tensorboard results
         if self.tb_writer:
             x = [mloss.item()] + [results.item()]
-            titles = ['loss', '0.5AP']
+            titles = ['Train Loss', '0.5AP']
             for xi, title in zip(x, titles):
                 self.tb_writer.add_scalar(title, xi, epoch)
+
+    def _save_checkpoint(self, results, epoch):
 
         # Update best mAP
         fitness = results  # total loss
