@@ -12,6 +12,8 @@ from torch.utils.data import DataLoader
 
 from . import csv_eval
 from . import coco_eval
+import logging
+logger = logging.getLogger(__name__)
 
 print('CUDA available: {}'.format(torch.cuda.is_available()))
 
@@ -103,12 +105,12 @@ class RetinaModel:
 
     def train(self, epochs=100, save=True):
 
-        try:
-            # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
-            from torch.utils.tensorboard import SummaryWriter
-            self.tb_writer = SummaryWriter()
-        except:
-            pass
+        # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
+        from torch.utils.tensorboard import SummaryWriter
+        self.tb_writer = SummaryWriter()
+        logger.info(os.path.exists('runs'))
+
+        logger.info(os.path.exists('runs'))
 
         for epoch_num in range(epochs):
 
@@ -119,8 +121,12 @@ class RetinaModel:
             epoch_loss = []
             loss_hist = collections.deque(maxlen=500)
             pbar = tqdm(enumerate(self.dataloader_train))
-            for iter_num, data in pbar:
+            # for iter_num, data in pbar:
+            total_num_iterations = len(self.dataloader_train)
+            pbar_iterator = iter(pbar)
+            for _ in range(total_num_iterations):
                 try:
+                    iter_num, data = next(pbar_iterator)
                     self.optimizer.zero_grad()
                     classification_loss, regression_loss = self.retinanet(
                         [data['img'].cuda(device=self.device).float(), data['annot'].cuda(device=self.device)])
@@ -134,8 +140,8 @@ class RetinaModel:
                     self.optimizer.step()
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
-                    s = 'Epoch: {} | Iteration: {} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                        epoch_num, iter_num, float(classification_loss), float(regression_loss), np.mean(loss_hist))
+                    s = 'Epoch: {}/{} | Iteration: {}/{} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
+                        epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss), float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
                     del classification_loss
                     del regression_loss

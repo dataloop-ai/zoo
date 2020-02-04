@@ -5,7 +5,8 @@ import json
 import os
 
 import torch
-
+import logging
+logger = logging.getLogger('launcher')
 
 
 def compute_overlap(a, b):
@@ -234,7 +235,11 @@ def evaluate(
     for label in range(generator.num_classes()):
         sum_AP = sum_AP + average_precisions[label][0] * average_precisions[label][1]
         total_num_annotations = total_num_annotations + average_precisions[label][1]
-    mAP = sum_AP / total_num_annotations
+    if total_num_annotations > 0:
+        mAP = sum_AP / total_num_annotations
+    else:
+        logger.info('total num annotations in val is zero')
+        mAP = 0
     print('\nmAP: ', mAP)
     return mAP
 

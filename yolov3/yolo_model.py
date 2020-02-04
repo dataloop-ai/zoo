@@ -50,12 +50,11 @@ class YoloModel:
         device = torch_utils.select_device(self.device, batch_size=batch_size)
         other_hyp['obj'] *= img_size / 416.  # scale other_hyp['obj'] by img_size (evolved at 416)
 
-        try:
-            # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
-            from torch.utils.tensorboard import SummaryWriter
-            self.tb_writer = SummaryWriter()
-        except:
-            pass
+
+        # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
+        from torch.utils.tensorboard import SummaryWriter
+        self.tb_writer = SummaryWriter()
+
         if pretrain_bias:
             self.prebias()
         epochs = 1 if self.pretrain_bias else epochs  # 500200 batches at bs 64, 117263 images = 273 epochs
