@@ -144,7 +144,8 @@ class RetinaModel:
                     del classification_loss
                     del regression_loss
                 except Exception as e:
-                    print(e)
+                    logger.info(e)
+
                     continue
 
             self.scheduler.step(np.mean(epoch_loss))
