@@ -108,10 +108,6 @@ class RetinaModel:
         # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
         from torch.utils.tensorboard import SummaryWriter
         self.tb_writer = SummaryWriter()
-        logger.info(os.path.exists('runs'))
-
-        logger.info(os.path.exists('runs'))
-
         for epoch_num in range(epochs):
 
             print('total epochs: ', epochs)
