@@ -65,6 +65,7 @@ class CocoDataset(Dataset):
 
         img = self.load_image(idx)
         annot = self.load_annotations(idx)
+
         sample = {'img': img, 'annot': annot}
         if self.transform:
             sample = self.transform(sample)
@@ -74,12 +75,18 @@ class CocoDataset(Dataset):
     def load_image(self, image_index):
         image_info = self.coco.loadImgs(self.image_ids[image_index])[0]
         path = os.path.join(self.root_dir, 'images', self.set_name, image_info['file_name'])
-        img = skimage.io.imread(path)
+        try:
+            img = skimage.io.imread(path)
+            if len(img.shape) == 2:
+                img = skimage.color.gray2rgb(img)
+            return img.astype(np.float32) / 255.0
 
-        if len(img.shape) == 2:
-            img = skimage.color.gray2rgb(img)
+        except Exception as e:
 
-        return img.astype(np.float32) / 255.0
+            raise Exception('image name: ' + image_info['filename'] + ', id: ' + image_info[
+                'id'] + ' caused the following error ' + repr(e))
+
+
 
     def load_annotations(self, image_index):
         # get ground truth annotations
@@ -216,7 +223,6 @@ class PredDataset(Dataset):
 
     def get_transform(self):
         return TransformTr(resize=self.resize)
-
 
     def load_image(self, image_index):
         img = skimage.io.imread(self.image_names[image_index])
@@ -376,7 +382,6 @@ class CSVDataset(Dataset):
     def get_transform(self):
         return TransformTr(resize=self.resize)
 
-
     def load_image(self, image_index):
         img = skimage.io.imread(self.image_names[image_index])
 
@@ -427,7 +432,7 @@ class CSVDataset(Dataset):
             except ValueError:
                 raise (ValueError(
                     'line {}: format should be \'img_file,x1,y1,x2,y2,class_name\' or \'img_file,,,,,\''.format(line)),
-                           None)
+                       None)
 
             if img_file not in result:
                 result[img_file] = []
@@ -507,9 +512,11 @@ def collater(data):
 
 class Resizer(object):
     """Convert ndarrays in sample to Tensors."""
+
     def __init__(self, min_side=608, max_side=1024):
         self.min_side = min_side
         self.max_side = max_side
+
     def __call__(self, sample):
         image, annots = sample['img'], sample['annot']
 
@@ -530,7 +537,7 @@ class Resizer(object):
         # resize the image with the computed scale
         image = skimage.transform.resize(image, (int(round(rows * scale)), int(round((cols * scale)))))
         rows, cols, cns = image.shape
-        #add padding for fpn
+        # add padding for fpn
         pad_w = 32 - rows % 32
         pad_h = 32 - cols % 32
 

@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from . import csv_eval
 from . import coco_eval
 import logging
+
 logger = logging.getLogger(__name__)
 
 print('CUDA available: {}'.format(torch.cuda.is_available()))
@@ -120,6 +121,7 @@ class RetinaModel:
             # for iter_num, data in pbar:
             total_num_iterations = len(self.dataloader_train)
             pbar_iterator = iter(pbar)
+
             for _ in range(total_num_iterations):
                 try:
                     iter_num, data = next(pbar_iterator)
