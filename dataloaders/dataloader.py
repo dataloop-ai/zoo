@@ -83,8 +83,8 @@ class CocoDataset(Dataset):
 
         except Exception as e:
 
-            raise Exception('image name: ' + image_info['filename'] + ', id: ' + image_info[
-                'id'] + ' caused the following error ' + repr(e))
+            raise Exception('image name: ' + image_info['file_name'] + ', id: ' + str(image_info[
+                'id']) + ' caused the following error ' + repr(e))
 
 
 
