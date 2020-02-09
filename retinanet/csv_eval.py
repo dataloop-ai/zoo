@@ -83,7 +83,13 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
     with torch.no_grad():
 
         for index in range(len(dataset)):
-            data = dataset[index]
+            try:
+                data = dataset[index]
+            except:
+                for label in range(dataset.num_classes()):
+                    all_detections[index][label] = np.zeros((1, 5))
+                continue
+
             scale = data['scale']
 
             # run network
@@ -116,7 +122,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
             else:
                 # copy detections to all_detections
                 for label in range(dataset.num_classes()):
-                    all_detections[index][label] = np.zeros((0, 5))
+                    all_detections[index][label] = np.zeros((1, 5))
 
             print('{}/{}'.format(index + 1, len(dataset)), end='\r')
 
@@ -189,6 +195,7 @@ def evaluate(
             detected_annotations = []
 
             for d in detections:
+
                 scores = np.append(scores, d[4])
 
                 if annotations.shape[0] == 0:

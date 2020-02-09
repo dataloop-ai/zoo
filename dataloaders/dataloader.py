@@ -127,7 +127,7 @@ class CocoDataset(Dataset):
         return float(image['width']) / float(image['height'])
 
     def num_classes(self):
-        return 80
+        return len(self.classes)
 
 
 class PredDataset(Dataset):
@@ -282,7 +282,7 @@ class PredDataset(Dataset):
         return self.labels[label]
 
     def num_classes(self):
-        return max(self.classes.values()) + 1
+        return len(self.classes)
 
     def image_aspect_ratio(self, image_index):
         image = Image.open(self.image_names[image_index])
@@ -466,7 +466,7 @@ class CSVDataset(Dataset):
         return self.labels[label]
 
     def num_classes(self):
-        return max(self.classes.values()) + 1
+        return len(self.classes)
 
     def image_aspect_ratio(self, image_index):
         image = Image.open(self.image_names[image_index])

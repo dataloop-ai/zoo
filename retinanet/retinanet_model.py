@@ -118,13 +118,12 @@ class RetinaModel:
             epoch_loss = []
             loss_hist = collections.deque(maxlen=500)
             pbar = tqdm(enumerate(self.dataloader_train))
-            # for iter_num, data in pbar:
             total_num_iterations = len(self.dataloader_train)
-            pbar_iterator = iter(pbar)
+            dataloader_iterator = iter(enumerate(self.dataloader_train))
 
             for _ in range(total_num_iterations):
                 try:
-                    iter_num, data = next(pbar_iterator)
+                    iter_num, data = next(dataloader_iterator)
                     self.optimizer.zero_grad()
                     classification_loss, regression_loss = self.retinanet(
                         [data['img'].cuda(device=self.device).float(), data['annot'].cuda(device=self.device)])
