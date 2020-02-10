@@ -9,12 +9,11 @@ from . import model
 from zoo.dataloaders.dataloader import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
     Augmenter, Normalizer
 from torch.utils.data import DataLoader
-
+from logging_utils import logginger
 from . import csv_eval
 from . import coco_eval
-import logging
 
-logger = logging.getLogger(__name__)
+logger = logginger(__name__)
 
 print('CUDA available: {}'.format(torch.cuda.is_available()))
 

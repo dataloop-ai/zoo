@@ -13,7 +13,9 @@ from .model import *
 from .yolo_utils.datasets import *
 from .yolo_utils.utils import *
 from .yolo_utils.parse_config import *
+from logging_utils import logginger
 
+logger = logginger(__name__)
 
 
 class YoloModel:
