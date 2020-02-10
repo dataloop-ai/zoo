@@ -117,13 +117,13 @@ class RetinaModel:
 
             epoch_loss = []
             loss_hist = collections.deque(maxlen=500)
-            pbar = tqdm(enumerate(self.dataloader_train))
             total_num_iterations = len(self.dataloader_train)
-            dataloader_iterator = iter(enumerate(self.dataloader_train))
+            dataloader_iterator = iter(self.dataloader_train)
+            pbar = tqdm(total=total_num_iterations)
 
-            for _ in range(total_num_iterations):
+            for iter_num in range(1, total_num_iterations + 1):
                 try:
-                    iter_num, data = next(dataloader_iterator)
+                    data = next(dataloader_iterator)
                     self.optimizer.zero_grad()
                     classification_loss, regression_loss = self.retinanet(
                         [data['img'].cuda(device=self.device).float(), data['annot'].cuda(device=self.device)])
@@ -137,16 +137,17 @@ class RetinaModel:
                     self.optimizer.step()
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
-                    s = 'Epoch: {}/{} | Iteration: {}/{} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
+                    s = 'Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
                         epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss), float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
+                    pbar.update()
                     del classification_loss
                     del regression_loss
                 except Exception as e:
                     logger.info(e)
-
+                    pbar.update()
                     continue
-
+            pbar.close()
             self.scheduler.step(np.mean(epoch_loss))
             self.final_epoch = epoch_num + 1 == epochs
 
@@ -162,7 +163,7 @@ class RetinaModel:
         return torch.load(self.best_checkpoint_path)
 
     def get_metrics(self):
-        # TODO: does this work on coco
+
         mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)
         return mAP
 
@@ -184,7 +185,7 @@ class RetinaModel:
         # Write Tensorboard results
         if self.tb_writer:
             x = [mloss.item()] + [results.item()]
-            titles = ['Train Loss', '0.5AP']
+            titles = ['Train_Loss', '0.5AP']
             for xi, title in zip(x, titles):
                 self.tb_writer.add_scalar(title, xi, epoch)
 
