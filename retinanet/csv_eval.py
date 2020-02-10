@@ -87,7 +87,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
                 data = dataset[index]
             except:
                 for label in range(dataset.num_classes()):
-                    all_detections[index][label] = np.zeros((1, 5))
+                    all_detections[index][label] = np.zeros((0, 5))
                 continue
 
             scale = data['scale']
@@ -122,7 +122,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
             else:
                 # copy detections to all_detections
                 for label in range(dataset.num_classes()):
-                    all_detections[index][label] = np.zeros((1, 5))
+                    all_detections[index][label] = np.zeros((0, 5))
 
             print('{}/{}'.format(index + 1, len(dataset)), end='\r')
 
