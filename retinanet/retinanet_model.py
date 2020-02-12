@@ -103,12 +103,12 @@ class RetinaModel:
         self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
 
-    def train(self, epochs=100, save=True):
+    def train(self, epochs=100, init_epoch=0, save=True):
 
         # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
         from torch.utils.tensorboard import SummaryWriter
         self.tb_writer = SummaryWriter()
-        for epoch_num in range(epochs):
+        for epoch_num in range(init_epoch, epochs):
 
             print('total epochs: ', epochs)
             self.retinanet.train()
