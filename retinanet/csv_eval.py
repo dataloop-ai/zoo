@@ -246,7 +246,7 @@ def evaluate(
         mAP = sum_AP / total_num_annotations
     else:
         logger.info('total num annotations in val is zero')
-        mAP = 0
+        mAP = np.int64(0)
     print('\nmAP: ', mAP)
     return mAP
 

@@ -71,6 +71,9 @@ class RetinaModel:
                                              batch_sampler=sampler_val)
 
         print('Num training images: {}'.format(len(self.dataset_train)))
+        if len(self.dataset_val) == 0:
+            raise Exception('num val images is 0!')
+        print('Num val images: {}'.format(len(self.dataset_val)))
 
     def build(self, depth=50, learning_rate=1e-5, scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
         # Create the model
