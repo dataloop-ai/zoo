@@ -19,13 +19,13 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 
 class RetinaModel:
-    def __init__(self, device, home_path):
+    def __init__(self, device, trial_id, home_path):
         self.home_path = home_path
         self.device = device
         this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
         self.weights_dir_path = self.last_checkpoint_path = os.path.join(this_path, 'weights')
-        self.last_checkpoint_path = os.path.join(this_path, 'weights', 'last.pt')
-        self.best_checkpoint_path = os.path.join(this_path, 'weights', 'best.pt')
+        self.last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + trial_id + '.pt')
+        self.best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + trial_id + '.pt')
         self.results_path = os.path.join(this_path, 'weights', 'results.txt')
 
         self.best_fitness = - float('inf')
@@ -106,12 +106,12 @@ class RetinaModel:
         self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
 
-    def train(self, epochs=100, save=True):
+    def train(self, epochs=100, init_epoch=0, save=True):
 
         # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
         from torch.utils.tensorboard import SummaryWriter
         self.tb_writer = SummaryWriter()
-        for epoch_num in range(epochs):
+        for epoch_num in range(init_epoch, epochs):
 
             print('total epochs: ', epochs)
             self.retinanet.train()
@@ -140,7 +140,8 @@ class RetinaModel:
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
                     s = 'Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                        epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss), float(regression_loss), np.mean(loss_hist))
+                        epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss),
+                        float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
                     pbar.update()
                     del classification_loss

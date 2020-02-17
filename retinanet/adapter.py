@@ -18,6 +18,7 @@ class AdapterModel:
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
         self.home_path = None
+        trial_id = self.hp_values['trial_id']
         if self.annotation_type == 'coco':
             self.home_path = self.model_specs['data']['home_path']
             self.dataset_name = self.model_specs['data']['dataset_name']
@@ -25,7 +26,7 @@ class AdapterModel:
             self.classes_filepath = os.path.join(self.output_path, 'classes.txt')
             self.annotations_train_filepath = os.path.join(self.output_path, 'annotations_train.txt')
             self.annotations_val_filepath = os.path.join(self.output_path, 'annotations_val.txt')
-        self.retinanet_model = RetinaModel(devices['gpu_index'], self.home_path)
+        self.retinanet_model = RetinaModel(devices['gpu_index'], trial_id, self.home_path)
 
     def reformat(self):
         if self.annotation_type == 'coco':
@@ -63,7 +64,8 @@ class AdapterModel:
                                    scales=self.hp_values['anchor_scales'])
 
     def train(self):
-        self.retinanet_model.train(epochs=self.training_configs['epochs'],
+        self.retinanet_model.train(epochs=self.hp_values['tuner/epochs'],
+                                   init_epoch=self.hp_values['tuner/initial_epoch'],
                                    save=self.final)
 
     def get_checkpoint(self):
