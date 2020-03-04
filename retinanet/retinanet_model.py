@@ -19,7 +19,7 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 
 class RetinaModel:
-    def __init__(self, device, trial_id, home_path):
+    def __init__(self, device, resume, trial_id, home_path):
         self.home_path = home_path
         self.device = device
         this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
@@ -30,6 +30,8 @@ class RetinaModel:
 
         self.best_fitness = - float('inf')
         self.tb_writer = None
+        self.retinanet = None
+        self.resume = resume
 
     def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=None,
                    train_set_name='train2017', val_set_name='val2017', resize=608):
@@ -77,34 +79,43 @@ class RetinaModel:
 
     def build(self, depth=50, learning_rate=1e-5, scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
         # Create the model
+        # TODO: RESUME FROM BEST EPOCH INSTEAD OF LAST?
+        if self.resume:
+            checkpoint = torch.load(self.last_checkpoint_path)
+            self.retinanet.load_state_dict(checkpoint['model'])
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            self.scheduler.load_state_dict(checkpoint['scheduler']) # TODO: test this, is it done right?
 
-        if depth == 18:
-            retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                       weights_dir=self.weights_dir_path,
-                                       pretrained=True)
-        elif depth == 34:
-            retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                       weights_dir=self.weights_dir_path,
-                                       pretrained=True)
-        elif depth == 50:
-            retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                       weights_dir=self.weights_dir_path,
-                                       pretrained=True)
-        elif depth == 101:
-            retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                        weights_dir=self.weights_dir_path,
-                                        pretrained=True)
-        elif depth == 152:
-            retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                        weights_dir=self.weights_dir_path,
-                                        pretrained=True)
         else:
-            raise ValueError('Unsupported model depth, must be one of 18, 34, 50, 101, 152')
+
+            if depth == 18:
+                self.retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                                weights_dir=self.weights_dir_path, pretrained=True)
+            elif depth == 34:
+                self.retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                              weights_dir=self.weights_dir_path,
+                                              pretrained=True)
+            elif depth == 50:
+                self.retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                              weights_dir=self.weights_dir_path,
+                                              pretrained=True)
+            elif depth == 101:
+                self.retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                               weights_dir=self.weights_dir_path,
+                                               pretrained=True)
+            elif depth == 152:
+                self.retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                               weights_dir=self.weights_dir_path,
+                                               pretrained=True)
+            else:
+                raise ValueError('Unsupported model depth, must be one of 18, 34, 50, 101, 152')
+
+            self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
+            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
+
         self.scales = scales
-        self.retinanet = retinanet.cuda(device=self.device)
+        self.retinanet = self.retinanet.cuda(device=self.device)
         self.retinanet.training = True
-        self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
-        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
 
     def train(self, epochs=100, init_epoch=0, save=True):
 
@@ -204,7 +215,8 @@ class RetinaModel:
                       'best_fitness': self.best_fitness,
                       'training_results': results,
                       'model': self.retinanet.state_dict(),
-                      'optimizer': None if self.final_epoch else self.optimizer.state_dict(),
+                      'optimizer': self.optimizer.state_dict(),
+                      'scheduler': self.scheduler.state_dict(),
                       'scales': self.scales}
 
         # Save last checkpoint
