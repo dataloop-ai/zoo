@@ -117,7 +117,7 @@ class RetinaModel:
         self.retinanet = self.retinanet.cuda(device=self.device)
         self.retinanet.training = True
 
-    def train(self, epochs=100, init_epoch=0, save=True):
+    def train(self, epochs=100, init_epoch=0):
 
         # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
         from torch.utils.tensorboard import SummaryWriter
@@ -168,8 +168,7 @@ class RetinaModel:
             mAP = self.get_metrics()
             self._write_to_tensorboard(mAP, np.mean(loss_hist), epoch_num)
 
-            if save:
-                self._save_checkpoint(mAP, epoch_num)
+            self._save_checkpoint(mAP, epoch_num)
             if self.final_epoch:
                 self._save_classes_for_inference()
 

@@ -6,8 +6,7 @@ from .visualize import detect
 
 class AdapterModel:
 
-    def __init__(self, devices, model_specs, hp_values, final):
-        self.final = final
+    def __init__(self, devices, model_specs, hp_values):
         self.model_specs = model_specs
         self.annotation_type = model_specs['data']['annotation_type']
         self.hp_values = hp_values
@@ -66,8 +65,7 @@ class AdapterModel:
 
     def train(self):
         self.retinanet_model.train(epochs=self.hp_values['tuner/epochs'],
-                                   init_epoch=self.hp_values['tuner/initial_epoch'],
-                                   save=self.final)
+                                   init_epoch=self.hp_values['tuner/initial_epoch'])
 
     def get_checkpoint(self):
         return self.retinanet_model.get_best_checkpoint()
