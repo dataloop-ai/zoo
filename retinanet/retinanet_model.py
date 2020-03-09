@@ -176,7 +176,7 @@ class RetinaModel:
                 self._save_classes_for_inference()
 
     def get_best_checkpoint(self):
-        return torch.load(self.best_checkpoint_path)
+        return torch.load(self.save_best_checkpoint_path)
 
     def get_metrics(self):
 
