@@ -24,7 +24,7 @@ class RetinaModel:
         self.device = device
         this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
         self.weights_dir_path = os.path.join(this_path, 'weights')
-        if resume is not None:
+        if resume:
             self.resume_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + resume_trial_id + '.pt')
             self.resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
         self.save_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + save_trial_id + '.pt')
