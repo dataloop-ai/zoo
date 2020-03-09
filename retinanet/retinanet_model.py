@@ -19,13 +19,16 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 
 class RetinaModel:
-    def __init__(self, device, resume, trial_id, home_path):
+    def __init__(self, device, resume, save_trial_id, resume_trial_id, home_path):
         self.home_path = home_path
         self.device = device
         this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
-        self.weights_dir_path = self.last_checkpoint_path = os.path.join(this_path, 'weights')
-        self.last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + trial_id + '.pt')
-        self.best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + trial_id + '.pt')
+        self.weights_dir_path = os.path.join(this_path, 'weights')
+        if resume is not None:
+            self.resume_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + resume_trial_id + '.pt')
+            self.resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
+        self.save_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + save_trial_id + '.pt')
+        self.save_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + save_trial_id + '.pt')
         self.results_path = os.path.join(this_path, 'weights', 'results.txt')
 
         self.best_fitness = - float('inf')
@@ -81,7 +84,7 @@ class RetinaModel:
         # Create the model
         # TODO: RESUME FROM BEST EPOCH INSTEAD OF LAST?
         if self.resume:
-            checkpoint = torch.load(self.last_checkpoint_path)
+            checkpoint = torch.load(self.resume_last_checkpoint_path)
             self.retinanet.load_state_dict(checkpoint['model'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler']) # TODO: test this, is it done right?
@@ -219,11 +222,11 @@ class RetinaModel:
                       'scales': self.scales}
 
         # Save last checkpoint
-        torch.save(checkpoint, self.last_checkpoint_path)
+        torch.save(checkpoint, self.save_last_checkpoint_path)
 
         # Save best checkpoint
         if self.best_fitness == fitness:
-            torch.save(checkpoint, self.best_checkpoint_path)
+            torch.save(checkpoint, self.save_best_checkpoint_path)
 
         # Delete checkpoint
         del checkpoint
