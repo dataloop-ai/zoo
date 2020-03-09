@@ -122,7 +122,7 @@ class RetinaModel:
         # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
         from torch.utils.tensorboard import SummaryWriter
         self.tb_writer = SummaryWriter()
-        for epoch_num in range(init_epoch, epochs):
+        for epoch_num in range(init_epoch + 1, epochs + 1):
 
             print('total epochs: ', epochs)
             self.retinanet.train()
