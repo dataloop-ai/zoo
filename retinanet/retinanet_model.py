@@ -82,40 +82,37 @@ class RetinaModel:
 
     def build(self, depth=50, learning_rate=1e-5, scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
         # Create the model
+        if depth == 18:
+            self.retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                            weights_dir=self.weights_dir_path, pretrained=True)
+        elif depth == 34:
+            self.retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                          weights_dir=self.weights_dir_path,
+                                          pretrained=True)
+        elif depth == 50:
+            self.retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                          weights_dir=self.weights_dir_path,
+                                          pretrained=True)
+        elif depth == 101:
+            self.retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                           weights_dir=self.weights_dir_path,
+                                           pretrained=True)
+        elif depth == 152:
+            self.retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales,
+                                           weights_dir=self.weights_dir_path,
+                                           pretrained=True)
+        else:
+            raise ValueError('Unsupported model depth, must be one of 18, 34, 50, 101, 152')
+
+        self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
         # TODO: RESUME FROM BEST EPOCH INSTEAD OF LAST?
         if self.resume:
             checkpoint = torch.load(self.resume_last_checkpoint_path)
             self.retinanet.load_state_dict(checkpoint['model'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler']) # TODO: test this, is it done right?
-
-        else:
-
-            if depth == 18:
-                self.retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                                weights_dir=self.weights_dir_path, pretrained=True)
-            elif depth == 34:
-                self.retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                              weights_dir=self.weights_dir_path,
-                                              pretrained=True)
-            elif depth == 50:
-                self.retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                              weights_dir=self.weights_dir_path,
-                                              pretrained=True)
-            elif depth == 101:
-                self.retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                               weights_dir=self.weights_dir_path,
-                                               pretrained=True)
-            elif depth == 152:
-                self.retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales,
-                                               weights_dir=self.weights_dir_path,
-                                               pretrained=True)
-            else:
-                raise ValueError('Unsupported model depth, must be one of 18, 34, 50, 101, 152')
-
-            self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
-            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
-
+            # TODO is it right to resume optimizer and schedular like this???
         self.scales = scales
         self.retinanet = self.retinanet.cuda(device=self.device)
         self.retinanet.training = True
