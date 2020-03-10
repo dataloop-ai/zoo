@@ -162,7 +162,7 @@ class RetinaModel:
                     continue
             pbar.close()
             self.scheduler.step(np.mean(epoch_loss))
-            self.final_epoch = epoch_num + 1 == epochs
+            self.final_epoch = epoch_num == epochs
 
             mAP = self.get_metrics()
             self._write_to_tensorboard(mAP, np.mean(loss_hist), epoch_num)
