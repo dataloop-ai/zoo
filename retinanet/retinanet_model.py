@@ -166,7 +166,8 @@ class RetinaModel:
         return torch.load(self.best_checkpoint_path)
 
     def get_metrics(self):
-
+        checkpoint = torch.load(self.best_checkpoint_path)
+        self.retinanet.load_state_dict(checkpoint['model'])
         mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)
         return mAP
 
