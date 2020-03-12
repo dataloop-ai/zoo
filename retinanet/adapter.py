@@ -62,6 +62,7 @@ class AdapterModel:
     def build(self):
         self.retinanet_model.build(depth=self.training_configs['depth'],
                                    learning_rate=self.hp_values['learning_rate'],
+                                   ratios=self.hp_values['anchor_ratios'],
                                    scales=self.hp_values['anchor_scales'])
 
     def train(self):
