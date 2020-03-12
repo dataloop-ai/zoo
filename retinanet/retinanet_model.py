@@ -23,7 +23,7 @@ class RetinaModel:
         self.home_path = home_path
         self.device = device
         this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
-        self.weights_dir_path = self.last_checkpoint_path = os.path.join(this_path, 'weights')
+        self.weights_dir_path = os.path.join(this_path, 'weights')
         self.last_checkpoint_path = os.path.join(this_path, 'weights', 'last.pt')
         self.best_checkpoint_path = os.path.join(this_path, 'weights', 'best.pt')
         self.results_path = os.path.join(this_path, 'weights', 'results.txt')
@@ -75,27 +75,27 @@ class RetinaModel:
             raise Exception('num val images is 0!')
         print('Num val images: {}'.format(len(self.dataset_val)))
 
-    def build(self, depth=50, learning_rate=1e-5, scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
+    def build(self, depth=50, learning_rate=1e-5, ratios=[0.5, 1, 2], scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
         # Create the model
 
         if depth == 18:
-            retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), scales=scales,
+            retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
                                        weights_dir=self.weights_dir_path,
                                        pretrained=True)
         elif depth == 34:
-            retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), scales=scales,
+            retinanet = model.resnet34(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
                                        weights_dir=self.weights_dir_path,
                                        pretrained=True)
         elif depth == 50:
-            retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), scales=scales,
+            retinanet = model.resnet50(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
                                        weights_dir=self.weights_dir_path,
                                        pretrained=True)
         elif depth == 101:
-            retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), scales=scales,
+            retinanet = model.resnet101(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
                                         weights_dir=self.weights_dir_path,
                                         pretrained=True)
         elif depth == 152:
-            retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), scales=scales,
+            retinanet = model.resnet152(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
                                         weights_dir=self.weights_dir_path,
                                         pretrained=True)
         else:
@@ -140,7 +140,8 @@ class RetinaModel:
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
                     s = 'Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                        epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss), float(regression_loss), np.mean(loss_hist))
+                        epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss),
+                        float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
                     pbar.update()
                     del classification_loss
