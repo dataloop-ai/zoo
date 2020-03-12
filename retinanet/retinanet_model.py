@@ -157,8 +157,7 @@ class RetinaModel:
             mAP = self.get_metrics()
             self._write_to_tensorboard(mAP, np.mean(loss_hist), epoch_num)
 
-            if save:
-                self._save_checkpoint(mAP, epoch_num)
+            self._save_checkpoint(mAP, epoch_num)
             if self.final_epoch:
                 self._save_classes_for_inference()
 
