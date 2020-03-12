@@ -6,6 +6,10 @@ import torch.nn as nn
 class Anchors(nn.Module):
     def __init__(self, pyramid_levels=None, strides=None, sizes=None, ratios=None, scales=None):
         super(Anchors, self).__init__()
+        self.pyramid_levels = pyramid_levels
+        self.strides = strides
+        self.sizes = sizes
+        self.ratios = ratios
         self.scales = scales
         if pyramid_levels is None:
             self.pyramid_levels = [3, 4, 5, 6, 7]
