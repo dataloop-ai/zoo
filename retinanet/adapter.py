@@ -3,6 +3,9 @@ from dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
 from .visualize import detect
 
+def generate_trial_id():
+    s = str(time.time()) + str(random.randint(1, 1e7))
+    return hashlib.sha256(s.encode('utf-8')).hexdigest()[:32]
 
 class AdapterModel:
 
@@ -17,12 +20,18 @@ class AdapterModel:
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
         self.home_path = None
-        if 'tuner/past_trial_id' in self.hp_values:
+        try:
             past_trial_id = self.hp_values['tuner/past_trial_id']
-        else:
+        except:
             past_trial_id = None
-        new_trial_id = self.hp_values['tuner/new_trial_id']
-        resume = self.hp_values['tuner/initial_epoch'] > 0
+        try:
+            new_trial_id = self.hp_values['tuner/new_trial_id']
+        except:
+            new_trial_id = generate_trial_id()
+        try:
+            resume = self.hp_values['tuner/initial_epoch'] > 0
+        except:
+            resume = False
         if self.annotation_type == 'coco':
             self.home_path = self.model_specs['data']['home_path']
             self.dataset_name = self.model_specs['data']['dataset_name']
