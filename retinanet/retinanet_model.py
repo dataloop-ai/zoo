@@ -166,7 +166,7 @@ class RetinaModel:
             self.scheduler.step(np.mean(epoch_loss))
             self.final_epoch = epoch_num == epochs
 
-            mAP = self.get_metrics()
+            mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)
             self._write_to_tensorboard(mAP, np.mean(loss_hist), epoch_num)
 
             self._save_checkpoint(mAP, epoch_num)
@@ -177,7 +177,8 @@ class RetinaModel:
         return torch.load(self.save_best_checkpoint_path)
 
     def get_metrics(self):
-
+        checkpoint = torch.load(self.best_checkpoint_path)
+        self.retinanet.load_state_dict(checkpoint['model'])
         mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)
         return mAP
 

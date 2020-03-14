@@ -185,8 +185,9 @@ class ResNet(nn.Module):
 
         self.fpn = PyramidFeatures(fpn_sizes[0], fpn_sizes[1], fpn_sizes[2])
 
-        self.regressionModel = RegressionModel(256)
-        self.classificationModel = ClassificationModel(256, num_classes=num_classes)
+        num_anchors = len(ratios) * len(scales)
+        self.regressionModel = RegressionModel(256, num_anchors=num_anchors)
+        self.classificationModel = ClassificationModel(256, num_anchors=num_anchors, num_classes=num_classes)
 
         ratios = np.array(ratios)
         scales = np.array(scales)
