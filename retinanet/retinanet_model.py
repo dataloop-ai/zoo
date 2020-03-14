@@ -30,6 +30,7 @@ class RetinaModel:
             self.resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
         self.save_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + save_trial_id + '.pt')
         self.save_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + save_trial_id + '.pt')
+        self.save_trial_id = save_trial_id
         self.results_path = os.path.join(this_path, 'weights', 'results.txt')
 
         self.best_fitness = - float('inf')
@@ -151,8 +152,8 @@ class RetinaModel:
                     self.optimizer.step()
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
-                    s = 'Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                        epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss),
+                    s = 'Trial {} -- Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
+                        self.save_trial_id[:3], epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss),
                         float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
                     pbar.update()
@@ -177,7 +178,7 @@ class RetinaModel:
         return torch.load(self.save_best_checkpoint_path)
 
     def get_metrics(self):
-        checkpoint = torch.load(self.best_checkpoint_path)
+        checkpoint = torch.load(self.save_best_checkpoint_path)
         self.retinanet.load_state_dict(checkpoint['model'])
         mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)
         return mAP
