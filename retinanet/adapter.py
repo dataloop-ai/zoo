@@ -17,7 +17,10 @@ class AdapterModel:
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
         self.home_path = None
-        past_trial_id = self.hp_values['tuner/past_trial_id']
+        if 'tuner/past_trial_id' in self.hp_values:
+            past_trial_id = self.hp_values['tuner/past_trial_id']
+        else:
+            past_trial_id = None
         new_trial_id = self.hp_values['tuner/new_trial_id']
         resume = self.hp_values['tuner/initial_epoch'] > 0
         if self.annotation_type == 'coco':
