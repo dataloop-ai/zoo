@@ -3,11 +3,13 @@ from dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
 from .visualize import detect
 
+def generate_trial_id():
+    s = str(time.time()) + str(random.randint(1, 1e7))
+    return hashlib.sha256(s.encode('utf-8')).hexdigest()[:32]
 
 class AdapterModel:
 
-    def __init__(self, devices, model_specs, hp_values, final):
-        self.final = final
+    def __init__(self, devices, model_specs, hp_values):
         self.model_specs = model_specs
         self.annotation_type = model_specs['data']['annotation_type']
         self.hp_values = hp_values
@@ -18,6 +20,18 @@ class AdapterModel:
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
         self.home_path = None
+        try:
+            past_trial_id = self.hp_values['tuner/past_trial_id']
+        except:
+            past_trial_id = None
+        try:
+            new_trial_id = self.hp_values['tuner/new_trial_id']
+        except:
+            new_trial_id = generate_trial_id()
+        try:
+            resume = self.hp_values['tuner/initial_epoch'] > 0
+        except:
+            resume = False
         if self.annotation_type == 'coco':
             self.home_path = self.model_specs['data']['home_path']
             self.dataset_name = self.model_specs['data']['dataset_name']
@@ -25,7 +39,7 @@ class AdapterModel:
             self.classes_filepath = os.path.join(self.output_path, 'classes.txt')
             self.annotations_train_filepath = os.path.join(self.output_path, 'annotations_train.txt')
             self.annotations_val_filepath = os.path.join(self.output_path, 'annotations_val.txt')
-        self.retinanet_model = RetinaModel(devices['gpu_index'], self.home_path)
+        self.retinanet_model = RetinaModel(devices['gpu_index'], resume, new_trial_id, past_trial_id, self.home_path)
 
     def reformat(self):
         if self.annotation_type == 'coco':
@@ -64,8 +78,8 @@ class AdapterModel:
                                    scales=self.hp_values['anchor_scales'])
 
     def train(self):
-        self.retinanet_model.train(epochs=self.training_configs['epochs'],
-                                   save=self.final)
+        self.retinanet_model.train(epochs=self.hp_values['tuner/epochs'],
+                                   init_epoch=self.hp_values['tuner/initial_epoch'])
 
     def get_checkpoint(self):
         return self.retinanet_model.get_best_checkpoint()
