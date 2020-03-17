@@ -29,8 +29,8 @@ class AdapterModel:
             past_trial_id = None
         try:
             new_trial_id = self.hp_values['tuner/new_trial_id']
-        except:
-            new_trial_id = generate_trial_id()
+        except Exception as e:
+            raise Exception('make sure a new trial id was passed, got this error: ' + repr(e))
         try:
             resume = self.hp_values['tuner/initial_epoch'] > 0
         except:
