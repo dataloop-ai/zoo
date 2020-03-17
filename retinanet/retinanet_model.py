@@ -117,6 +117,7 @@ class RetinaModel:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler'])  # TODO: test this, is it done right?
             # TODO is it right to resume optimizer and schedular like this???
+        self.ratios = ratios
         self.scales = scales
 
     def train(self, epochs=100, init_epoch=0):
@@ -219,6 +220,7 @@ class RetinaModel:
                       'model': self.retinanet.state_dict(),
                       'optimizer': self.optimizer.state_dict(),
                       'scheduler': self.scheduler.state_dict(),
+                      'ratios': self.ratios,
                       'scales': self.scales}
 
         # Save last checkpoint

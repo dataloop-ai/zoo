@@ -2,6 +2,9 @@ import os
 from dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
 from .visualize import detect
+import random
+import time
+import hashlib
 
 def generate_trial_id():
     s = str(time.time()) + str(random.randint(1, 1e7))
