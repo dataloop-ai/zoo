@@ -87,8 +87,8 @@ class AdapterModel:
     def get_checkpoint(self):
         return self.retinanet_model.get_best_checkpoint()
 
-    def get_metrics(self):
-        return {'val_accuracy': self.retinanet_model.get_metrics().item()}
+    def get_metrics_and_checkpoint(self):
+        return {'metrics': {'val_accuracy': self.retinanet_model.get_metrics().item()}, 'checkpoint': self.retinanet_model.get_best_checkpoint()}
 
 
 def predict(home_path, checkpoint_path):
