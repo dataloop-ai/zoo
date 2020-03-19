@@ -7,14 +7,21 @@ from .utils import BasicBlock, Bottleneck, BBoxTransform, ClipBoxes
 from .anchors import Anchors
 from . import losses
 # from lib.nms.pth_nms import pth_nms
-from .lib.nms.gpu_nms import gpu_nms
+if torch.cuda.is_available():
+    from .lib.nms.gpu_nms import gpu_nms
+else:
+    from .lib.nms.cpu_nms import cpu_nms
 
 
 def nms(dets, thresh):
     "Dispatch to either CPU or GPU NMS implementations.\
     Accept dets as tensor"""
     # return pth_nms(dets, thresh)
-    return gpu_nms(dets, thresh)
+    if torch.cuda.is_available():
+        return gpu_nms(dets, thresh)
+    else:
+        #TODO: make sure this is implemented correctly
+        return cpu_nms(dets, thresh)
 
 
 model_urls = {
