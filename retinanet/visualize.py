@@ -18,12 +18,10 @@ def detect(checkpoint_path, num_classes, pred_on_path, dataset='csv', csv_classe
     sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
     dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
     checkpoint = torch.load(checkpoint_path)
-    try:
-        scales = checkpoint['scales']
-    except:
-        scales = [1, 1.2599210498948732, 1.5874010519681994]
+    scales = checkpoint['scales']
+    ratios = checkpoint['ratios']
 
-    retinanet = model.resnet50(num_classes=num_classes, scales=scales)
+    retinanet = model.resnet152(num_classes=num_classes, scales=scales, ratios=ratios)
     retinanet.load_state_dict(checkpoint['model'])
     retinanet = retinanet.cuda()
     retinanet.eval()
