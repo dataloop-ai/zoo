@@ -92,8 +92,4 @@ class AdapterModel:
 
 
 def predict(home_path, checkpoint_path):
-    class_names_path = os.path.join(home_path, "d.names")
-    num_classes = sum(1 for line in open(class_names_path))
-    predict_on_path = os.path.join(home_path, 'predict_on')
-    detect(csv_classes=class_names_path, pred_on_path=predict_on_path, checkpoint_path=checkpoint_path,
-           num_classes=num_classes, ouptut_path=os.path.join(home_path, 'predicted_on'))
+    detect(home_path=home_path, checkpoint_path=checkpoint_path)
