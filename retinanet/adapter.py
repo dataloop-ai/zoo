@@ -81,8 +81,8 @@ class AdapterModel:
                                    scales=self.hp_values['anchor_scales'])
 
     def train(self):
-        self.retinanet_model.train(epochs=self.training_configs['epochs'],
-                                   init_epoch=0)
+        self.retinanet_model.train(epochs=self.hp_values['tuner/epochs'],
+                                   init_epoch=self.hp_values['tuner/initial_epoch'])
 
     def get_checkpoint(self):
         return self.retinanet_model.get_best_checkpoint()

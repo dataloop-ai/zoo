@@ -30,14 +30,15 @@ def detect(home_path, checkpoint_path):
         raise Exception('there are already predictions for model: ' + checkpoint_name)
     os.mkdir(output_path)
     #copy annotations to predictions
-    gt_file = glob.glob(os.path.join(pred_on_path, '*groundtruth*.json'))[0]
+    gt_file = glob.glob(os.path.join(pred_on_path, '*.json'))[0]
+    set_name = gt_file.split('/')[-1].split('.')[0].split('_')[1]
     if os.path.exists(gt_file):
         if not os.path.exists(os.path.join(home_path, 'predictions', 'annotations')):
             os.mkdir(os.path.join(home_path, 'predictions', 'annotations'))
         copyfile(gt_file, os.path.join(home_path, 'predictions', 'annotations', gt_file.split('/')[-1]))
     # dataset_val = PredDataset(pred_on_path=pred_on_path, class_list=class_names_path,
     #                          transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
-    dataset_val = PDataset(pred_on_path, set_name='groundtruth',
+    dataset_val = PDataset(pred_on_path, set_name=set_name,
                         transform=transforms.Compose([Normalizer(), Resizer(min_side=608)]))
     # sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
     dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
