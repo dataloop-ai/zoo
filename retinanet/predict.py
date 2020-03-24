@@ -16,36 +16,29 @@ from zoo.dataloaders.dataloader import CocoDataset, PredDataset , PDataset, coll
 
 def detect(home_path, checkpoint_path):
 
-    class_names_path = os.path.join(home_path, "d.names")
-    # compute number of classes
-    num_classes = sum(1 for line in open(class_names_path))
     # must have a file to predict on called "predict_on"
     pred_on_path = os.path.join(home_path, 'predict_on')
-    #create output path
+
     checkpoint_name = checkpoint_path.split('.')[0]
+    #create output path
     output_path = os.path.join(home_path, 'predictions', checkpoint_name)
     if not os.path.exists(os.path.join(home_path, 'predictions')):
         os.mkdir(os.path.join(home_path, 'predictions'))
     if os.path.exists(output_path):
         raise Exception('there are already predictions for model: ' + checkpoint_name)
     os.mkdir(output_path)
-    #copy annotations to predictions
-    gt_file = glob.glob(os.path.join(pred_on_path, '*.json'))[0]
-    set_name = gt_file.split('/')[-1].split('.')[0].split('_')[1]
-    if os.path.exists(gt_file):
-        if not os.path.exists(os.path.join(home_path, 'predictions', 'annotations')):
-            os.mkdir(os.path.join(home_path, 'predictions', 'annotations'))
-        copyfile(gt_file, os.path.join(home_path, 'predictions', 'annotations', gt_file.split('/')[-1]))
-    # dataset_val = PredDataset(pred_on_path=pred_on_path, class_list=class_names_path,
-    #                          transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
-    dataset_val = PDataset(pred_on_path, set_name=set_name,
-                        transform=transforms.Compose([Normalizer(), Resizer(min_side=608)]))
-    # sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
+
+    class_names_path = os.path.join(home_path, "d.names")
+    dataset_val = PredDataset(pred_on_path=pred_on_path, class_list_path=class_names_path,
+                              transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
+
     dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
+
     checkpoint = torch.load(checkpoint_path)
     scales = checkpoint['scales']
     ratios = checkpoint['ratios']
 
+    num_classes = sum(1 for line in open(class_names_path))
     retinanet = model.resnet152(num_classes=num_classes, scales=scales, ratios=ratios) #TODO: make depth an input parameter
     retinanet.load_state_dict(checkpoint['model'])
     retinanet = retinanet.cuda()

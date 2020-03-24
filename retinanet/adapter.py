@@ -1,7 +1,7 @@
 import os
 from dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
-from .visualize import detect
+from .predict import detect
 import random
 import time
 import hashlib
@@ -91,13 +91,16 @@ class AdapterModel:
     def get_metrics_and_checkpoint(self):
         return self.retinanet_model.get_best_metrics_and_checkpoint()
 
-    def predict_init(self):
-        try:
-            best_checkpoint = self.retinanet_model.get_best_checkpoint()
+    @property
+    def checkpoint_path(self):
+        return self.retinanet_model.save_best_checkpoint_path
 
+    def predict_init(self, home_path, checkpoint_path):
+        self.home_path = home_path
+        self.checkpoint_path = checkpoint_path
 
     def predict(self):
-
+        detect(self.home_path, self.get_checkpoint_path)
 
 
 
