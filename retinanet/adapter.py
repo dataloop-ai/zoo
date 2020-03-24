@@ -95,14 +95,10 @@ class AdapterModel:
     def checkpoint_path(self):
         return self.retinanet_model.save_best_checkpoint_path
 
-    def predict_init(self, home_path, checkpoint_path):
-        self.home_path = home_path
-        self.checkpoint_path = checkpoint_path
-
-    def predict(self):
-        detect(self.home_path, self.get_checkpoint_path)
-
+    def predict(self, home_path, checkpoint_path):
+        try:
+            detect(home_path=home_path, checkpoint_path=checkpoint_path)
+        except:
+            detect(home_path=self.home_path, checkpoint_path=self.get_checkpoint_path)
 
 
-def predict(home_path, checkpoint_path):
-    detect(home_path=home_path, checkpoint_path=checkpoint_path)
