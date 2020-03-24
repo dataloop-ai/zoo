@@ -119,6 +119,7 @@ class RetinaModel:
             # TODO is it right to resume optimizer and schedular like this???
         self.ratios = ratios
         self.scales = scales
+        self.depth = depth
 
     def train(self, epochs=100, init_epoch=0):
 
@@ -178,11 +179,15 @@ class RetinaModel:
     def get_best_checkpoint(self):
         return torch.load(self.save_best_checkpoint_path)
 
-    def get_metrics(self):
+    def get_best_metrics(self):
         checkpoint = torch.load(self.save_best_checkpoint_path)
         self.retinanet.load_state_dict(checkpoint['model'])
         mAP = csv_eval.evaluate(self.dataset_val, self.retinanet)
-        return mAP
+        return mAP.item()
+
+    def get_best_metrics_and_checkpoint(self):
+        return {'metrics': {'val_accuracy': self.get_best_metrics()},
+                'checkpoint': self.get_best_checkpoint()}
 
     def save(self):
         torch.save(self.retinanet, 'model_final.pt')
@@ -216,12 +221,13 @@ class RetinaModel:
         # Create checkpoint
         checkpoint = {'epoch': epoch,
                       'best_fitness': self.best_fitness,
-                      'training_results': results,
+                      'metrics': {'val_accuracy': results.item()},
                       'model': self.retinanet.state_dict(),
                       'optimizer': self.optimizer.state_dict(),
                       'scheduler': self.scheduler.state_dict(),
                       'ratios': self.ratios,
-                      'scales': self.scales}
+                      'scales': self.scales,
+                      'depth': self.depth}
 
         # Save last checkpoint
         torch.save(checkpoint, self.save_last_checkpoint_path)
