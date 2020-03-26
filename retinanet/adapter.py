@@ -97,8 +97,8 @@ class AdapterModel:
 
     def predict(self, home_path, checkpoint_path):
         try:
-            detect(home_path=home_path, checkpoint_path=checkpoint_path)
+            return detect(home_path=home_path, checkpoint_path=checkpoint_path)
         except:
-            detect(home_path=self.home_path, checkpoint_path=self.get_checkpoint_path)
+            return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
 
 

@@ -76,3 +76,5 @@ def detect(home_path, checkpoint_path):
                         f.write(str(x))
                         f.write(' ')
                     f.write('\n')
+
+    return output_path

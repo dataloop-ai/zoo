@@ -44,7 +44,7 @@ def detect(home_path, checkpoint_path):
                         transform=transforms.Compose([Normalizer(), Resizer(min_side=608)]))
     # sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
     dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
-
+    checkpoint = torch.load(checkpoint_path)
     scales = checkpoint['scales']
     ratios = checkpoint['ratios']
 
