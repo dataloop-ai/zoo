@@ -1,7 +1,7 @@
 import os
 from dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
-from .visualize import detect
+from .predict import detect
 import random
 import time
 import hashlib
@@ -12,7 +12,7 @@ def generate_trial_id():
 
 class AdapterModel:
 
-    def __init__(self, devices, model_specs, hp_values):
+    def trial_init(self, devices, model_specs, hp_values):
         self.model_specs = model_specs
         self.annotation_type = model_specs['data']['annotation_type']
         self.hp_values = hp_values
@@ -87,9 +87,18 @@ class AdapterModel:
     def get_checkpoint(self):
         return self.retinanet_model.get_best_checkpoint()
 
+    # TODO: put this into retinanet class so it can be integrated into the checkpoint dict
     def get_metrics_and_checkpoint(self):
-        return {'metrics': {'val_accuracy': self.retinanet_model.get_metrics().item()}, 'checkpoint': self.retinanet_model.get_best_checkpoint()}
+        return self.retinanet_model.get_best_metrics_and_checkpoint()
+
+    @property
+    def checkpoint_path(self):
+        return self.retinanet_model.save_best_checkpoint_path
+
+    def predict(self, home_path, checkpoint_path):
+        try:
+            return detect(home_path=home_path, checkpoint_path=checkpoint_path)
+        except:
+            return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
 
 
-def predict(home_path, checkpoint_path):
-    detect(home_path=home_path, checkpoint_path=checkpoint_path)

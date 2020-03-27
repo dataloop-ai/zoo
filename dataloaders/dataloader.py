@@ -241,7 +241,7 @@ class PDataset(Dataset):
 class PredDataset(Dataset):
     """CSV dataset."""
 
-    def __init__(self, pred_on_path, class_list, transform=None, resize=None):
+    def __init__(self, pred_on_path, class_list_path, transform=None, resize=None):
         """
         Args:
             train_file (string): CSV file with training annotations
@@ -249,23 +249,26 @@ class PredDataset(Dataset):
             test_file (string, optional): CSV file with testing annotations
         """
         self.train_file = pred_on_path
-        self.class_list = class_list
+        self.class_list_path = class_list_path
         self.transform = transform
 
         # parse the provided class file
         try:
-            with self._open_for_csv(self.class_list) as file:
+            with self._open_for_csv(self.class_list_path) as file:
                 self.classes = self.load_classes(csv.reader(file, delimiter=','))
         except ValueError as e:
-            raise (ValueError('invalid CSV class file: {}: {}'.format(self.class_list, e)), None)
+            raise (ValueError('invalid CSV class file: {}: {}'.format(self.class_list_path, e)), None)
 
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
         full_names = []
         for name in os.listdir(pred_on_path):
-            if name.split('.')[1] in ['jpg', 'png']:
-                full_names.append(os.path.join(pred_on_path, name))
+            try:
+                if name.split('.')[1] in ['jpg', 'png']:
+                    full_names.append(os.path.join(pred_on_path, name))
+            except:
+                pass
         image_data = {}
         for full_name in full_names:
             image_data[full_name] = []
