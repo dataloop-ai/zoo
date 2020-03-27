@@ -264,8 +264,11 @@ class PredDataset(Dataset):
             self.labels[value] = key
         full_names = []
         for name in os.listdir(pred_on_path):
-            if name.split('.')[1] in ['jpg', 'png']:
-                full_names.append(os.path.join(pred_on_path, name))
+            try:
+                if name.split('.')[1] in ['jpg', 'png']:
+                    full_names.append(os.path.join(pred_on_path, name))
+            except:
+                pass
         image_data = {}
         for full_name in full_names:
             image_data[full_name] = []

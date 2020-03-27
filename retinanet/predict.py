@@ -9,10 +9,10 @@ import torch
 from shutil import copyfile
 from torch.utils.data import DataLoader
 from torchvision import transforms
-
+from logging_utils import logginger
 from zoo.dataloaders.dataloader import CocoDataset, PredDataset , PDataset, collater, Resizer, AspectRatioBasedSampler, \
     UnNormalizer, Normalizer
-
+logger = logginger(__name__)
 
 def detect(home_path, checkpoint_path):
 
@@ -29,6 +29,7 @@ def detect(home_path, checkpoint_path):
     os.mkdir(output_path)
 
     class_names_path = os.path.join(home_path, "d.names")
+    logger.info('inside ' + str(pred_on_path) + ': ' + str(os.listdir(pred_on_path)))
     dataset_val = PredDataset(pred_on_path=pred_on_path, class_list_path=class_names_path,
                               transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
 
