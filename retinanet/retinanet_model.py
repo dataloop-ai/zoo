@@ -82,7 +82,8 @@ class RetinaModel:
             raise Exception('num val images is 0!')
         print('Num val images: {}'.format(len(self.dataset_val)))
 
-    def build(self, depth=50, learning_rate=1e-5, ratios=[0.5, 1, 2], scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
+    def build(self, depth=50, learning_rate=1e-5, ratios=[0.5, 1, 2],
+              scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
         # Create the model
         if depth == 18:
             retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
@@ -155,7 +156,8 @@ class RetinaModel:
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
                     s = 'Trial {} -- Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                        self.save_trial_id[:3], epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss),
+                        self.save_trial_id[:3], epoch_num, epochs, iter_num, total_num_iterations,
+                        float(classification_loss),
                         float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
                     pbar.update()
@@ -225,9 +227,9 @@ class RetinaModel:
                       'model': self.retinanet.state_dict(),
                       'optimizer': self.optimizer.state_dict(),
                       'scheduler': self.scheduler.state_dict(),
-                      'ratios': self.ratios,
-                      'scales': self.scales,
-                      'depth': self.depth}
+                      'hp_values': {'ratios': self.ratios,
+                                    'scales': self.scales,
+                                    'depth': self.depth}}
 
         # Save last checkpoint
         torch.save(checkpoint, self.save_last_checkpoint_path)

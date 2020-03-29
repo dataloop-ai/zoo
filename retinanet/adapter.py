@@ -5,6 +5,7 @@ from .predict import detect
 import random
 import time
 import hashlib
+import json
 
 def generate_trial_id():
     s = str(time.time()) + str(random.randint(1, 1e7))
@@ -12,7 +13,14 @@ def generate_trial_id():
 
 class AdapterModel:
 
-    def trial_init(self, devices, model_specs, hp_values):
+    def trial_init(self):
+        with open('trial_configs.json', 'r') as f:
+            inputs_dict = json.load(f)
+        devices = inputs_dict['devices']
+        model_specs = inputs_dict['model_specs']
+        hp_values = inputs_dict['hp_values']
+        if 'checkpoint' in inputs_dict.keys():
+            checkpoint = inputs_dict['checkpoint']
         self.model_specs = model_specs
         self.annotation_type = model_specs['data']['annotation_type']
         self.hp_values = hp_values
@@ -95,9 +103,11 @@ class AdapterModel:
     def checkpoint_path(self):
         return self.retinanet_model.save_best_checkpoint_path
 
-    def predict(self, home_path, checkpoint_path):
+    def predict(self):
         try:
-            return detect(home_path=home_path, checkpoint_path=checkpoint_path)
+            with open('predict_configs.json', 'r') as f:
+                inputs_dict = json.load(f)
+            return detect(home_path=inputs_dict['home_path'], checkpoint_path=inputs_dict['checkpoint_path'])
         except:
             return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
 
