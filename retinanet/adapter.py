@@ -8,12 +8,22 @@ import time
 import hashlib
 import json
 import torch
+import dtlpy as dl
+
 
 def generate_trial_id():
     s = str(time.time()) + str(random.randint(1, 1e7))
     return hashlib.sha256(s.encode('utf-8')).hexdigest()[:32]
 
+
 class AdapterModel:
+
+    def load_from_checkpoint(self, local_path, model_id, checkpoint_id):
+        model = dl.models.get(model_id=model_id)
+        checkpoint = model.checkpoints.get(checkpoint_id=checkpoint_id)
+        checkpoint.download(local_path=local_path)
+        self.load(checkpoint_path=local_path)
+        self.model = model
 
     def load(self, checkpoint_path='trial_checkpoint.pt'):
         trial_checkpoint = torch.load(checkpoint_path)
@@ -51,7 +61,6 @@ class AdapterModel:
         except Exception as e:
             raise Exception('make sure a new trial id was passed, got this error: ' + repr(e))
 
-
         if self.annotation_type == 'coco':
             self.home_path = self.model_specs['data']['home_path']
             self.dataset_name = self.model_specs['data']['dataset_name']
@@ -59,7 +68,8 @@ class AdapterModel:
             self.classes_filepath = os.path.join(self.output_path, 'classes.txt')
             self.annotations_train_filepath = os.path.join(self.output_path, 'annotations_train.txt')
             self.annotations_val_filepath = os.path.join(self.output_path, 'annotations_val.txt')
-        self.retinanet_model = RetinaModel(devices['gpu_index'], self.home_path, new_trial_id, past_trial_id, checkpoint)
+        self.retinanet_model = RetinaModel(devices['gpu_index'], self.home_path, new_trial_id, past_trial_id,
+                                           checkpoint)
 
     def reformat(self):
         if self.annotation_type == 'coco':
@@ -108,13 +118,21 @@ class AdapterModel:
         checkpoint['devices'] = self.devices
         return checkpoint
 
-    # TODO: put this into retinanet class so it can be integrated into the checkpoint dict
-    def get_metrics_and_checkpoint(self):
-        return self.retinanet_model.get_best_metrics_and_checkpoint()
-
     @property
     def checkpoint_path(self):
         return self.retinanet_model.save_best_checkpoint_path
+
+    def save(self, save_path):
+        checkpoint = self.get_checkpoint()
+        torch.save(checkpoint, save_path)
+
+    def upload_checkpoint(self, checkpoint_name, model_id=None):
+        if model_id:
+            model = dl.models.get(model_id=model_id)
+            self.model = model
+        save_path = checkpoint_name
+        self.save(save_path)
+        self.model.checkpoints.upload(checkpoint_name=checkpoint_name, local_path=save_path)
 
     def predict(self, checkpoint_path='predict_checkpoint.pt'):
         try:
@@ -122,5 +140,3 @@ class AdapterModel:
             return detect(home_path=inputs_dict['home_path'], checkpoint_path=inputs_dict['checkpoint_path'])
         except:
             return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
-
-
