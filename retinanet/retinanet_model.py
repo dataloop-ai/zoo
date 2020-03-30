@@ -19,15 +19,20 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 
 class RetinaModel:
-    def __init__(self, device, resume, save_trial_id, resume_trial_id, home_path):
+    def __init__(self, device, home_path, save_trial_id, resume_trial_id=None, checkpoint=None):
         self.home_path = home_path
         self.device = device
+        self.checkpoint = checkpoint
+
         this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
         self.weights_dir_path = os.path.join(this_path, 'weights')
 
-        if resume:
-            self.resume_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + resume_trial_id + '.pt')
-            self.resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
+        if resume_trial_id:
+            assert (checkpoint == None), "you can't load checkpoint and also resume given a past trial id"
+            resume_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + resume_trial_id + '.pt')
+            resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
+            self.checkpoint = torch.load(resume_last_checkpoint_path)
+            # TODO: resume from best???
         self.save_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + save_trial_id + '.pt')
         self.save_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + save_trial_id + '.pt')
         self.save_trial_id = save_trial_id
@@ -36,7 +41,6 @@ class RetinaModel:
         self.best_fitness = - float('inf')
         self.tb_writer = None
         self.retinanet = None
-        self.resume = resume
 
     def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=None,
                    train_set_name='train2017', val_set_name='val2017', resize=608):
@@ -111,13 +115,12 @@ class RetinaModel:
         self.retinanet.training = True
         self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
-        # TODO: RESUME FROM BEST EPOCH INSTEAD OF LAST?
-        if self.resume:
-            checkpoint = torch.load(self.resume_last_checkpoint_path)
-            self.retinanet.load_state_dict(checkpoint['model'])
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-            self.scheduler.load_state_dict(checkpoint['scheduler'])  # TODO: test this, is it done right?
-            # TODO is it right to resume optimizer and schedular like this???
+
+        if self.checkpoint is not None:
+            self.retinanet.load_state_dict(self.checkpoint['model'])
+            self.optimizer.load_state_dict(self.checkpoint['optimizer'])
+            self.scheduler.load_state_dict(self.checkpoint['scheduler'])  # TODO: test this, is it done right?
+            # TODO is it right to resume_read_trial optimizer and schedular like this???
         self.ratios = ratios
         self.scales = scales
         self.depth = depth
@@ -222,14 +225,11 @@ class RetinaModel:
 
         # Create checkpoint
         checkpoint = {'epoch': epoch,
-                      'best_fitness': self.best_fitness,
                       'metrics': {'val_accuracy': results.item()},
                       'model': self.retinanet.state_dict(),
                       'optimizer': self.optimizer.state_dict(),
-                      'scheduler': self.scheduler.state_dict(),
-                      'hp_values': {'ratios': self.ratios,
-                                    'scales': self.scales,
-                                    'depth': self.depth}}
+                      'scheduler': self.scheduler.state_dict()
+                      }
 
         # Save last checkpoint
         torch.save(checkpoint, self.save_last_checkpoint_path)

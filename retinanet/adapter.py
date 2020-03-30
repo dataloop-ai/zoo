@@ -1,11 +1,13 @@
 import os
-from dl_to_csv import create_annotations_txt
+from dataloop_services.dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
 from .predict import detect
+from copy import deepcopy
 import random
 import time
 import hashlib
 import json
+import torch
 
 def generate_trial_id():
     s = str(time.time()) + str(random.randint(1, 1e7))
@@ -13,20 +15,29 @@ def generate_trial_id():
 
 class AdapterModel:
 
-    def trial_init(self):
-        with open('trial_configs.json', 'r') as f:
-            inputs_dict = json.load(f)
-        devices = inputs_dict['devices']
-        model_specs = inputs_dict['model_specs']
-        hp_values = inputs_dict['hp_values']
-        if 'checkpoint' in inputs_dict.keys():
-            checkpoint = inputs_dict['checkpoint']
+    def load(self, checkpoint_path='trial_checkpoint.pt'):
+        trial_checkpoint = torch.load(checkpoint_path)
+
+        devices = trial_checkpoint['devices']
+        model_specs = trial_checkpoint['model_specs']
+        hp_values = trial_checkpoint['hp_values']
+        checkpoint = None
+        if 'model' in trial_checkpoint.keys():
+            checkpoint = deepcopy(trial_checkpoint)
+            for x in ['devices', 'model_specs', 'hp_values']:
+                checkpoint.pop(x)
+            epoch = checkpoint['epoch']
+            hp_values['tuner/initial_epoch'] = epoch
+
+        self.devices = devices
         self.model_specs = model_specs
-        self.annotation_type = model_specs['data']['annotation_type']
         self.hp_values = hp_values
+
+        self.annotation_type = model_specs['data']['annotation_type']
         self.path = os.getcwd()
         self.output_path = os.path.join(self.path, 'output')
         self.training_configs = self.model_specs['training_configs']
+
         self.classes_filepath = None
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
@@ -39,10 +50,8 @@ class AdapterModel:
             new_trial_id = self.hp_values['tuner/new_trial_id']
         except Exception as e:
             raise Exception('make sure a new trial id was passed, got this error: ' + repr(e))
-        try:
-            resume = self.hp_values['tuner/initial_epoch'] > 0
-        except:
-            resume = False
+
+
         if self.annotation_type == 'coco':
             self.home_path = self.model_specs['data']['home_path']
             self.dataset_name = self.model_specs['data']['dataset_name']
@@ -50,7 +59,7 @@ class AdapterModel:
             self.classes_filepath = os.path.join(self.output_path, 'classes.txt')
             self.annotations_train_filepath = os.path.join(self.output_path, 'annotations_train.txt')
             self.annotations_val_filepath = os.path.join(self.output_path, 'annotations_val.txt')
-        self.retinanet_model = RetinaModel(devices['gpu_index'], resume, new_trial_id, past_trial_id, self.home_path)
+        self.retinanet_model = RetinaModel(devices['gpu_index'], self.home_path, new_trial_id, past_trial_id, checkpoint)
 
     def reformat(self):
         if self.annotation_type == 'coco':
@@ -93,7 +102,11 @@ class AdapterModel:
                                    init_epoch=self.hp_values['tuner/initial_epoch'])
 
     def get_checkpoint(self):
-        return self.retinanet_model.get_best_checkpoint()
+        checkpoint = self.retinanet_model.get_best_checkpoint()
+        checkpoint['hp_values'] = self.hp_values
+        checkpoint['model_specs'] = self.model_specs
+        checkpoint['devices'] = self.devices
+        return checkpoint
 
     # TODO: put this into retinanet class so it can be integrated into the checkpoint dict
     def get_metrics_and_checkpoint(self):
@@ -103,10 +116,9 @@ class AdapterModel:
     def checkpoint_path(self):
         return self.retinanet_model.save_best_checkpoint_path
 
-    def predict(self):
+    def predict(self, checkpoint_path='predict_checkpoint.pt'):
         try:
-            with open('predict_configs.json', 'r') as f:
-                inputs_dict = json.load(f)
+            inputs_dict = torch.load(checkpoint_path)
             return detect(home_path=inputs_dict['home_path'], checkpoint_path=inputs_dict['checkpoint_path'])
         except:
             return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
