@@ -1,7 +1,7 @@
 import os
 from dataloop_services.dl_to_csv import create_annotations_txt
 from .retinanet_model import RetinaModel
-from .predict import detect
+from .predict import detect, detect_single_image
 from copy import deepcopy
 import random
 import time
@@ -46,18 +46,19 @@ class AdapterModel:
         self.annotation_type = model_specs['data']['annotation_type']
         self.path = os.getcwd()
         self.output_path = os.path.join(self.path, 'output')
-        self.training_configs = self.model_specs['training_configs']
+        # unify training configs and hp_values
+        self.configs = _combine_values(self.model_specs['training_configs'], hp_values)
 
         self.classes_filepath = None
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
         self.home_path = None
         try:
-            past_trial_id = self.hp_values['tuner/past_trial_id']
+            past_trial_id = self.configs['tuner/past_trial_id']
         except:
             past_trial_id = None
         try:
-            new_trial_id = self.hp_values['tuner/new_trial_id']
+            new_trial_id = self.configs['tuner/new_trial_id']
         except Exception as e:
             raise Exception('make sure a new trial id was passed, got this error: ' + repr(e))
 
@@ -99,17 +100,17 @@ class AdapterModel:
                                         coco_path=self.home_path,
                                         train_set_name='train' + self.dataset_name,
                                         val_set_name='val' + self.dataset_name,
-                                        resize=self.training_configs['input_size'])
+                                        resize=self.configs['input_size'])
 
     def build(self):
-        self.retinanet_model.build(depth=self.training_configs['depth'],
-                                   learning_rate=self.hp_values['learning_rate'],
-                                   ratios=self.hp_values['anchor_ratios'],
-                                   scales=self.hp_values['anchor_scales'])
+        self.retinanet_model.build(depth=self.configs['depth'],
+                                   learning_rate=self.configs['learning_rate'],
+                                   ratios=self.configs['anchor_ratios'],
+                                   scales=self.configs['anchor_scales'])
 
     def train(self):
-        self.retinanet_model.train(epochs=self.hp_values['tuner/epochs'],
-                                   init_epoch=self.hp_values['tuner/initial_epoch'])
+        self.retinanet_model.train(epochs=self.configs['tuner/epochs'],
+                                   init_epoch=self.configs['tuner/initial_epoch'])
 
     def get_checkpoint(self):
         checkpoint = self.retinanet_model.get_best_checkpoint()
@@ -140,3 +141,31 @@ class AdapterModel:
             return detect(home_path=inputs_dict['home_path'], checkpoint_path=inputs_dict['checkpoint_path'])
         except:
             return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
+
+    def predict_single_image(self, image_path, checkpoint_path):
+        return detect_single_image(image_path, checkpoint_path)
+
+    def predict_items(self, items, checkpoint_path, with_upload=True):
+        for item in items:
+            filepath = item.download()
+            results_path = self.predict(filepath, checkpoint_path)
+            if with_upload:
+                with open(results_path) as fg:
+                    results = fg.readlines()
+                builder = item.annotation.builder()
+                for result in results:
+                    result_ls = result.split(' ')
+                    builder.add(dl.Box(left=int(result_ls[2]), top=int(result_ls[3]), bottom=int(result_ls[4]),
+                                       right=int(result_ls[5]), label=result_ls[0]),
+                                model_info={'confidence': result_ls[1]})
+                item.annotations.upload(builder)
+
+            dirname = os.path.dirname(filepath)
+        return dirname
+
+
+def _combine_values(configs_under, configs_over):
+    for hp in configs_over.keys():
+        configs_under[hp] = configs_over[hp]
+
+    return configs_under

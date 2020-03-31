@@ -3,14 +3,17 @@ import time
 import argparse
 import glob
 import os
+import csv
 import cv2
+import skimage
 from . import model
 import torch
 from shutil import copyfile
+from .adapter import _combine_values
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from logging_utils import logginger
-from zoo.dataloaders.dataloader import CocoDataset, PredDataset , PDataset, collater, Resizer, AspectRatioBasedSampler, \
+from zoo.dataloaders.dataloader import CocoDataset, PredDataset , collater, Resizer, AspectRatioBasedSampler, \
     UnNormalizer, Normalizer
 logger = logginger(__name__)
 
@@ -28,19 +31,17 @@ def detect(home_path, checkpoint_path):
         raise Exception('there are already predictions for model: ' + checkpoint_name)
     os.mkdir(output_path)
 
-    class_names_path = os.path.join(home_path, "d.names")
     logger.info('inside ' + str(pred_on_path) + ': ' + str(os.listdir(pred_on_path)))
-    dataset_val = PredDataset(pred_on_path=pred_on_path, class_list_path=class_names_path,
+    dataset_val = PredDataset(pred_on_path=pred_on_path,
                               transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
 
     dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
 
     checkpoint = torch.load(checkpoint_path)
-    scales = checkpoint['scales']
-    ratios = checkpoint['ratios']
+    num_classes = len(checkpoint['labels'])
+    configs = _combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
 
-    num_classes = sum(1 for line in open(class_names_path))
-    retinanet = model.resnet152(num_classes=num_classes, scales=scales, ratios=ratios) #TODO: make depth an input parameter
+    retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
     retinanet.load_state_dict(checkpoint['model'])
     retinanet = retinanet.cuda()
     retinanet.eval()
@@ -79,3 +80,57 @@ def detect(home_path, checkpoint_path):
                     f.write('\n')
 
     return output_path
+
+def detect_single_image(image_path, checkpoint_path):
+
+    checkpoint = torch.load(checkpoint_path)
+    configs = _combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
+    labels = checkpoint['labels']
+    num_classes = len(labels)
+    retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
+    retinanet.load_state_dict(checkpoint['model'])
+    retinanet = retinanet.cuda()
+    retinanet.eval()
+
+    img = skimage.io.imread(image_path)
+
+    if len(img.shape) == 2:
+        img = skimage.color.gray2rgb(img)
+
+    img = img.astype(np.float32) / 255.0
+    transform = transforms.Compose([Normalizer(), Resizer(min_side=608)]) #TODO: make this dynamic
+    sample = {'img': img, 'annot': np.zeros((0, 5))}
+    data = transform(sample)
+    scores, classification, transformed_anchors = retinanet(data['img'].cuda().float())
+
+
+    idxs = np.where(scores.cpu() > 0.5)[0]
+    scale = data['scale']
+    detections_list = []
+    for j in range(idxs.shape[0]):
+        bbox = transformed_anchors[idxs[j], :]
+        label_idx = int(classification[idxs[j]])
+        label_name = labels[label_idx]
+        score = scores[idxs[j]].item()
+
+        # un resize for eval against gt
+        bbox /= scale
+        bbox.round()
+        x1 = int(bbox[0])
+        y1 = int(bbox[1])
+        x2 = int(bbox[2])
+        y2 = int(bbox[3])
+        detections_list.append([label_name, str(score), str(x1), str(y1), str(x2), str(y2)])
+    img_name = image_path.split('/')[-1].split('.')[0]
+    filename = img_name + '.txt'
+    path = os.path.dirname(image_path)
+    filepathname = os.path.join(path, filename)
+    with open(filepathname, 'w', encoding='utf8') as f:
+        for single_det_list in detections_list:
+            for i, x in enumerate(single_det_list):
+                f.write(str(x))
+                f.write(' ')
+            f.write('\n')
+
+    return filepathname
+
