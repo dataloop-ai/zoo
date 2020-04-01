@@ -11,6 +11,12 @@ import torch
 import dtlpy as dl
 
 
+def combine_values(configs_under, configs_over):
+    for hp in configs_over.keys():
+        configs_under[hp] = configs_over[hp]
+
+    return configs_under
+
 def generate_trial_id():
     s = str(time.time()) + str(random.randint(1, 1e7))
     return hashlib.sha256(s.encode('utf-8')).hexdigest()[:32]
@@ -47,7 +53,7 @@ class AdapterModel:
         self.path = os.getcwd()
         self.output_path = os.path.join(self.path, 'output')
         # unify training configs and hp_values
-        self.configs = _combine_values(self.model_specs['training_configs'], hp_values)
+        self.configs = combine_values(self.model_specs['training_configs'], hp_values)
 
         self.classes_filepath = None
         self.annotations_train_filepath = None
@@ -164,8 +170,3 @@ class AdapterModel:
         return dirname
 
 
-def _combine_values(configs_under, configs_over):
-    for hp in configs_over.keys():
-        configs_under[hp] = configs_over[hp]
-
-    return configs_under

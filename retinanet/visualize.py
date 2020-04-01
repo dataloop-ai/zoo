@@ -10,7 +10,7 @@ from shutil import copyfile
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from zoo.dataloaders.dataloader import CocoDataset, PredDataset , PDataset, collater, Resizer, AspectRatioBasedSampler, \
+from zoo.dataloaders.dataloader import CocoDataset, PredDataset, collater, Resizer, AspectRatioBasedSampler, \
     UnNormalizer, Normalizer
 
 
@@ -40,11 +40,15 @@ def detect(home_path, checkpoint_path):
         copyfile(gt_file, os.path.join(home_path, 'predictions', 'annotations', gt_file.split('/')[-1]))
     # dataset_val = PredDataset(pred_on_path=pred_on_path, class_list_path=class_names_path,
     #                          transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
-    dataset_val = PDataset(pred_on_path, set_name=set_name,
+    dataset_val = PredDataset(pred_on_path, set_name=set_name,
                         transform=transforms.Compose([Normalizer(), Resizer(min_side=608)]))
     # sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
     dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
-    checkpoint = torch.load(checkpoint_path)
+
+    if torch.cuda.is_available():
+        checkpoint = torch.load(checkpoint_path)
+    else:
+        checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
     scales = checkpoint['scales']
     ratios = checkpoint['ratios']
 

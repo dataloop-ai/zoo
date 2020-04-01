@@ -229,7 +229,7 @@ class RetinaModel:
                       'model': self.retinanet.state_dict(),
                       'optimizer': self.optimizer.state_dict(),
                       'scheduler': self.scheduler.state_dict(),
-                      'labels': self.dataset_val.labels
+                      'labels': self.dataset_train.labels
                       }
 
         # Save last checkpoint

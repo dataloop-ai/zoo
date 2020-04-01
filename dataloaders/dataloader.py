@@ -145,15 +145,16 @@ class PredDataset(Dataset):
         self.transform = transform
 
         # parse the provided class file
-        try:
-            with self._open_for_csv(self.class_list_path) as file:
-                self.classes = self.load_classes(csv.reader(file, delimiter=','))
-        except ValueError as e:
-            pass
+        if self.class_list_path is not None:
+            try:
+                with self._open_for_csv(self.class_list_path) as file:
+                    self.classes = self.load_classes(csv.reader(file, delimiter=','))
+            except ValueError as e:
+                raise (ValueError('invalid CSV class file: {}: {}'.format(self.class_list_path, e)), None)
 
-        self.labels = {}
-        for key, value in self.classes.items():
-            self.labels[value] = key
+            self.labels = {}
+            for key, value in self.classes.items():
+                self.labels[value] = key
         full_names = []
         for name in os.listdir(pred_on_path):
             try:
