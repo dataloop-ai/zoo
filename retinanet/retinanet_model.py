@@ -22,11 +22,15 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 class RetinaModel:
     def __init__(self, device, home_path, save_trial_id, resume_trial_id=None, checkpoint=None):
+        if os.getcwd().split('/')[-1] == 'zoo':
+            home_path = os.path.join('..', home_path)
         self.home_path = home_path
         self.device = device
         self.checkpoint = checkpoint
-
-        this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
+        if os.getcwd().split('/')[-1] == 'zoo':
+            this_path = os.path.join(os.getcwd(), 'retinanet')
+        else:
+            this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
         self.weights_dir_path = os.path.join(this_path, 'weights')
 
         if resume_trial_id:
@@ -44,16 +48,16 @@ class RetinaModel:
         self.tb_writer = None
         self.retinanet = None
 
-    def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=None,
+    def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=False,
                    train_set_name='train2017', val_set_name='val2017', resize=608):
         self.dataset = dataset
         if self.dataset == 'coco':
             if coco_path is None:
                 raise ValueError('Must provide --home_path when training on COCO,')
-            self.dataset_train = CocoDataset(coco_path, set_name=train_set_name,
+            self.dataset_train = CocoDataset(self.home_path, set_name=train_set_name,
                                              transform=transforms.Compose(
                                                  [Normalizer(), Augmenter(), Resizer(min_side=resize)]))
-            self.dataset_val = CocoDataset(coco_path, set_name=val_set_name,
+            self.dataset_val = CocoDataset(self.home_path, set_name=val_set_name,
                                            transform=transforms.Compose([Normalizer(), Resizer(min_side=resize)]))
 
         elif self.dataset == 'csv':

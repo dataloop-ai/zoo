@@ -31,7 +31,7 @@ class AdapterModel:
         self.load(checkpoint_path=local_path)
         self.model = model
 
-    def load(self, checkpoint_path='trial_checkpoint.pt'):
+    def load(self, checkpoint_path='checkpoint.pt'):
         trial_checkpoint = torch.load(checkpoint_path)
 
         devices = trial_checkpoint['devices']
@@ -107,7 +107,7 @@ class AdapterModel:
                                         csv_train=self.annotations_train_filepath,
                                         csv_val=self.annotations_val_filepath,
                                         csv_classes=self.classes_filepath,
-                                        coco_path=self.home_path,
+                                        coco_path=True,
                                         train_set_name='train' + self.dataset_name,
                                         val_set_name='val' + self.dataset_name,
                                         resize=self.configs['input_size'])
@@ -145,15 +145,24 @@ class AdapterModel:
         self.save(save_path)
         self.model.checkpoints.upload(checkpoint_name=checkpoint_name, local_path=save_path)
 
-    def predict(self, checkpoint_path='predict_checkpoint.pt'):
+    def predict(self, checkpoint_path='checkpoint.pt', output_dir='checkpoint0'):
         try:
-            inputs_dict = torch.load(checkpoint_path)
-            return detect(home_path=inputs_dict['home_path'], checkpoint_path=inputs_dict['checkpoint_path'])
+            if torch.cuda.is_available():
+                checkpoint = torch.load(checkpoint_path)
+            else:
+                checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+            return detect(checkpoint, output_dir)
         except:
-            return detect(home_path=self.home_path, checkpoint_path=self.checkpoint_path)
+            checkpoint = self.get_checkpoint()
+            return detect(checkpoint, output_dir)
 
-    def predict_single_image(self, image_path, checkpoint_path):
-        return detect_single_image(image_path, checkpoint_path)
+    def predict_single_image(self, image_path, checkpoint_path='checkpoint.pt'):
+
+        if torch.cuda.is_available():
+            checkpoint = torch.load(checkpoint_path)
+        else:
+            checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+        return detect_single_image(checkpoint, image_path)
 
     def predict_items(self, items, checkpoint_path, with_upload=True):
         for item in items:
