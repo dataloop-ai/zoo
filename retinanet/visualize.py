@@ -1,17 +1,15 @@
 import numpy as np
 import time
-import argparse
 import glob
 import os
 import cv2
-from . import model
+import model
 import torch
 from shutil import copyfile
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from zoo.dataloaders.dataloader import CocoDataset, PredDataset, collater, Resizer, AspectRatioBasedSampler, \
-    UnNormalizer, Normalizer
+from zoo.retinanet.dataloaders import PredDataset, collater, Resizer, UnNormalizer, Normalizer
 
 
 def detect(home_path, checkpoint_path):

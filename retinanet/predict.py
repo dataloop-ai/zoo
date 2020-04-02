@@ -1,21 +1,20 @@
 import numpy as np
 import time
-import argparse
-import glob
 import os
-import csv
-import cv2
 import skimage
 from . import model
 import torch
-from shutil import copyfile
 from .utils import combine_values
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from logging_utils import logginger
-from ..dataloaders.dataloader import CocoDataset, PredDataset , collater, Resizer, AspectRatioBasedSampler, \
-    UnNormalizer, Normalizer
-logger = logginger(__name__)
+from .dataloaders import PredDataset , collater, Resizer, Normalizer
+try:
+    from logging_utils import logginger
+    logger = logginger(__name__)
+except:
+    import logging
+    logger = logging.getLogger(__name__)
+
 
 def detect(home_path, checkpoint_path):
     if torch.cuda.is_available():

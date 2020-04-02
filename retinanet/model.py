@@ -6,11 +6,12 @@ import torch.utils.model_zoo as model_zoo
 from .utils import BasicBlock, Bottleneck, BBoxTransform, ClipBoxes
 from .anchors import Anchors
 from . import losses
+
 # from lib.nms.pth_nms import pth_nms
 if torch.cuda.is_available():
     from .lib.nms.gpu_nms import gpu_nms
 else:
-    from .lib.nms.cpu_nms import cpu_nms
+    from zoo.retinanet.lib.nms import cpu_nms
 
 
 def nms(dets, thresh):

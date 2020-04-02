@@ -5,15 +5,17 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 from torchvision import transforms
-from . import model
-from zoo.dataloaders.dataloader import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
+from . import model, csv_eval
+from .dataloaders import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
     Augmenter, Normalizer
 from torch.utils.data import DataLoader
-from logging_utils import logginger
-from . import csv_eval
-from . import coco_eval
 
-logger = logginger(__name__)
+try:
+    from logging_utils import logginger
+    logger = logginger(__name__)
+except:
+    import logging
+    logger = logging.getLogger(__name__)
 
 print('CUDA available: {}'.format(torch.cuda.is_available()))
 
