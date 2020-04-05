@@ -174,8 +174,8 @@ class AdapterModel:
                 builder = item.annotations.builder()
                 for result in results:
                     result_ls = result.split(' ')
-                    builder.add(dl.Box(left=int(result_ls[2]), top=int(result_ls[3]), bottom=int(result_ls[4]),
-                                       right=int(result_ls[5]), label=result_ls[0]),
+                    builder.add(dl.Box(left=int(result_ls[2]), top=int(result_ls[3]), right=int(result_ls[4]),
+                                        bottom=int(result_ls[5]), label=result_ls[0]),
                                 model_info={'confidence': result_ls[1], 'name': model_name})
                 item.annotations.upload(builder)
 
