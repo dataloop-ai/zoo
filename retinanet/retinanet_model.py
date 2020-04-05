@@ -5,29 +5,40 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 from torchvision import transforms
-from . import model
-from zoo.dataloaders.dataloader import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
+from . import model, csv_eval
+from .dataloaders import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
     Augmenter, Normalizer
 from torch.utils.data import DataLoader
-from logging_utils import logginger
-from . import csv_eval
-from . import coco_eval
 
-logger = logginger(__name__)
+try:
+    from logging_utils import logginger
+    logger = logginger(__name__)
+except:
+    import logging
+    logger = logging.getLogger(__name__)
 
 print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 
 class RetinaModel:
-    def __init__(self, device, resume, save_trial_id, resume_trial_id, home_path):
+    def __init__(self, device, home_path, save_trial_id, resume_trial_id=None, checkpoint=None):
+        if os.getcwd().split('/')[-1] == 'zoo':
+            home_path = os.path.join('..', home_path)
         self.home_path = home_path
         self.device = device
-        this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
+        self.checkpoint = checkpoint
+        if os.getcwd().split('/')[-1] == 'zoo':
+            this_path = os.path.join(os.getcwd(), 'retinanet')
+        else:
+            this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
         self.weights_dir_path = os.path.join(this_path, 'weights')
 
-        if resume:
-            self.resume_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + resume_trial_id + '.pt')
-            self.resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
+        if resume_trial_id:
+            assert (checkpoint == None), "you can't load checkpoint and also resume given a past trial id"
+            resume_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + resume_trial_id + '.pt')
+            resume_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + resume_trial_id + '.pt')
+            self.checkpoint = torch.load(resume_last_checkpoint_path)
+            # TODO: resume from best???
         self.save_last_checkpoint_path = os.path.join(this_path, 'weights', 'last_' + save_trial_id + '.pt')
         self.save_best_checkpoint_path = os.path.join(this_path, 'weights', 'best_' + save_trial_id + '.pt')
         self.save_trial_id = save_trial_id
@@ -36,18 +47,17 @@ class RetinaModel:
         self.best_fitness = - float('inf')
         self.tb_writer = None
         self.retinanet = None
-        self.resume = resume
 
-    def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=None,
+    def preprocess(self, dataset='csv', csv_train=None, csv_val=None, csv_classes=None, coco_path=False,
                    train_set_name='train2017', val_set_name='val2017', resize=608):
         self.dataset = dataset
         if self.dataset == 'coco':
             if coco_path is None:
                 raise ValueError('Must provide --home_path when training on COCO,')
-            self.dataset_train = CocoDataset(coco_path, set_name=train_set_name,
+            self.dataset_train = CocoDataset(self.home_path, set_name=train_set_name,
                                              transform=transforms.Compose(
                                                  [Normalizer(), Augmenter(), Resizer(min_side=resize)]))
-            self.dataset_val = CocoDataset(coco_path, set_name=val_set_name,
+            self.dataset_val = CocoDataset(self.home_path, set_name=val_set_name,
                                            transform=transforms.Compose([Normalizer(), Resizer(min_side=resize)]))
 
         elif self.dataset == 'csv':
@@ -82,7 +92,8 @@ class RetinaModel:
             raise Exception('num val images is 0!')
         print('Num val images: {}'.format(len(self.dataset_val)))
 
-    def build(self, depth=50, learning_rate=1e-5, ratios=[0.5, 1, 2], scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
+    def build(self, depth=50, learning_rate=1e-5, ratios=[0.5, 1, 2],
+              scales=[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]):
         # Create the model
         if depth == 18:
             retinanet = model.resnet18(num_classes=self.dataset_train.num_classes(), ratios=ratios, scales=scales,
@@ -110,13 +121,12 @@ class RetinaModel:
         self.retinanet.training = True
         self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
-        # TODO: RESUME FROM BEST EPOCH INSTEAD OF LAST?
-        if self.resume:
-            checkpoint = torch.load(self.resume_last_checkpoint_path)
-            self.retinanet.load_state_dict(checkpoint['model'])
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-            self.scheduler.load_state_dict(checkpoint['scheduler'])  # TODO: test this, is it done right?
-            # TODO is it right to resume optimizer and schedular like this???
+
+        if self.checkpoint is not None:
+            self.retinanet.load_state_dict(self.checkpoint['model'])
+            self.optimizer.load_state_dict(self.checkpoint['optimizer'])
+            self.scheduler.load_state_dict(self.checkpoint['scheduler'])  # TODO: test this, is it done right?
+            # TODO is it right to resume_read_trial optimizer and schedular like this???
         self.ratios = ratios
         self.scales = scales
         self.depth = depth
@@ -155,7 +165,8 @@ class RetinaModel:
                     loss_hist.append(float(loss))
                     epoch_loss.append(float(loss))
                     s = 'Trial {} -- Epoch: {}/{} | Iteration: {}/{}  | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                        self.save_trial_id[:3], epoch_num, epochs, iter_num, total_num_iterations, float(classification_loss),
+                        self.save_trial_id[:3], epoch_num, epochs, iter_num, total_num_iterations,
+                        float(classification_loss),
                         float(regression_loss), np.mean(loss_hist))
                     pbar.set_description(s)
                     pbar.update()
@@ -220,14 +231,12 @@ class RetinaModel:
 
         # Create checkpoint
         checkpoint = {'epoch': epoch,
-                      'best_fitness': self.best_fitness,
                       'metrics': {'val_accuracy': results.item()},
                       'model': self.retinanet.state_dict(),
                       'optimizer': self.optimizer.state_dict(),
                       'scheduler': self.scheduler.state_dict(),
-                      'ratios': self.ratios,
-                      'scales': self.scales,
-                      'depth': self.depth}
+                      'labels': self.dataset_train.labels
+                      }
 
         # Save last checkpoint
         torch.save(checkpoint, self.save_last_checkpoint_path)
