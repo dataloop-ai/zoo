@@ -2,12 +2,13 @@ import numpy as np
 import time
 import os
 import skimage
+import cv2
 from . import model
 import torch
 from .utils import combine_values
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from .dataloaders import PredDataset , collater, Resizer, Normalizer
+from .dataloaders import PredDataset, collater, Resizer, Normalizer, UnNormalizer
 try:
     from logging_utils import logginger
     logger = logginger(__name__)
@@ -16,7 +17,7 @@ except:
     logger = logging.getLogger(__name__)
 
 
-def detect(checkpoint, output_dir):
+def detect(checkpoint, output_dir, visualize=False):
 
     home_path = checkpoint['model_specs']['data']['home_path']
     if os.getcwd().split('/')[-1] == 'zoo':
@@ -47,6 +48,12 @@ def detect(checkpoint, output_dir):
         retinanet.load_state_dict(checkpoint['model'])
         retinanet = retinanet.cuda()
         retinanet.eval()
+        unnormalize = UnNormalizer()
+
+        def draw_caption(image, box, caption):
+            b = np.array(box).astype(int)
+            cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+            cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)
 
         for idx, data in enumerate(dataloader_val):
             scale = data['scale'][0]
@@ -55,13 +62,31 @@ def detect(checkpoint, output_dir):
                 scores, classification, transformed_anchors = retinanet(data['img'].cuda().float())
                 print('Elapsed time: {}'.format(time.time() - st))
                 idxs = np.where(scores.cpu() > 0.5)[0]
+                if visualize:
+                    img = np.array(255 * unnormalize(data['img'][0, :, :, :])).copy()
+
+                    img[img < 0] = 0
+                    img[img > 255] = 255
+
+                    img = np.transpose(img, (1, 2, 0))
+                    img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2RGB)
 
                 detections_list = []
                 for j in range(idxs.shape[0]):
                     bbox = transformed_anchors[idxs[j], :]
+                    if visualize:
+                        x1 = int(bbox[0])
+                        y1 = int(bbox[1])
+                        x2 = int(bbox[2])
+                        y2 = int(bbox[3])
+
                     label_idx = int(classification[idxs[j]])
                     label_name = labels[label_idx]
                     score = scores[idxs[j]].item()
+                    if visualize:
+                        draw_caption(img, (x1, y1, x2, y2), label_name)
+                        cv2.rectangle(img, (x1, y1), (x2, y2), color=(0, 0, 255), thickness=2)
+                        print(label_name)
 
                     # un resize for eval against gt
                     bbox /= scale
@@ -72,7 +97,8 @@ def detect(checkpoint, output_dir):
                     y2 = int(bbox[3])
                     detections_list.append([label_name, str(score), str(x1), str(y1), str(x2), str(y2)])
                 img_name = dataset_val.image_names[idx].split('/')[-1]
-                filename = img_name + '.txt'
+                i_name = img_name.split('.')[0]
+                filename = i_name + '.txt'
                 filepathname = os.path.join(output_path, filename)
                 with open(filepathname, 'w', encoding='utf8') as f:
                     for single_det_list in detections_list:
@@ -80,12 +106,16 @@ def detect(checkpoint, output_dir):
                             f.write(str(x))
                             f.write(' ')
                         f.write('\n')
+                if visualize:
+                    save_to_path = os.path.join(output_path, img_name)
+                    cv2.imwrite(save_to_path, img)
+                    cv2.waitKey(0)
     except:
         os.remove(output_path)
 
     return output_path
 
-def detect_single_image(checkpoint, image_path):
+def detect_single_image(checkpoint, image_path, visualize=False):
 
     configs = combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
     labels = checkpoint['labels']
@@ -138,5 +168,13 @@ def detect_single_image(checkpoint, image_path):
                     f.write(' ')
                 f.write('\n')
 
+        if visualize:
+            unnormalize = UnNormalizer()
+
+
     return filepathname
 
+def draw_caption(image, box, caption):
+    b = np.array(box).astype(int)
+    cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+    cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)

@@ -3,7 +3,7 @@ import time
 import glob
 import os
 import cv2
-import model
+from . import model
 import torch
 from shutil import copyfile
 from torch.utils.data import DataLoader

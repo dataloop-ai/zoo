@@ -151,7 +151,7 @@ class AdapterModel:
                 checkpoint = torch.load(checkpoint_path)
             else:
                 checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-            return detect(checkpoint, output_dir)
+            return detect(checkpoint, output_dir, visualize=True)
         except:
             checkpoint = self.get_checkpoint()
             return detect(checkpoint, output_dir)
@@ -164,28 +164,20 @@ class AdapterModel:
             checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
         return detect_single_image(checkpoint, image_path)
 
-    def predict_items(self, items, checkpoint_path, with_upload=True):
+    def predict_items(self, items, checkpoint_path, with_upload=True, model_name='retinanet'):
         for item in items:
             filepath = item.download()
-            results_path = self.predict(filepath, checkpoint_path)
+            results_path = self.predict_single_image(filepath, checkpoint_path)
             if with_upload:
                 with open(results_path) as fg:
                     results = fg.readlines()
-                builder = item.annotation.builder()
+                builder = item.annotations.builder()
                 for result in results:
                     result_ls = result.split(' ')
                     builder.add(dl.Box(left=int(result_ls[2]), top=int(result_ls[3]), bottom=int(result_ls[4]),
                                        right=int(result_ls[5]), label=result_ls[0]),
-                                model_info={'confidence': result_ls[1]})
+                                model_info={'confidence': result_ls[1], 'name': model_name})
                 item.annotations.upload(builder)
 
             dirname = os.path.dirname(filepath)
         return dirname
-
-
-if __name__ == '__main__':
-    model = AdapterModel()
-    model.load()
-    model.preprocess()
-    model.build()
-    model.train()
