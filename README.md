@@ -4,6 +4,10 @@ prototype training sessions, run inference and flexibly work with checkpoints in
 
 ## Quick Start
 ```
+mkdir data
+cd data
+git clone https://github.com/dataloop-ai/tiny_coco.git
+cd ..
 git clone https://github.com/dataloop-ai/ObjectDetNet.git
 cd ObjectDetNet
 python main.py --train
