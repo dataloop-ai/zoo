@@ -133,7 +133,7 @@ class AdapterModel:
     def checkpoint_path(self):
         return self.retinanet_model.save_best_checkpoint_path
 
-    def save(self, save_path):
+    def save(self, save_path='checkpoint.pt'):
         checkpoint = self.get_checkpoint()
         torch.save(checkpoint, save_path)
 

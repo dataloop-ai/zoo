@@ -11,10 +11,12 @@ args = parser.parse_args()
 
 model = AdapterModel()
 if args.train:
-    model.load()
+    model.load('example_checkpoint.pt')
     model.preprocess()
     model.build()
     model.train()
+    model.get_checkpoint()
+    model.save()
 if args.predict:
     model.predict()
 if args.predict_single:

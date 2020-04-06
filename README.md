@@ -1,5 +1,5 @@
 ## Getting started with the ***ObjectDetNet***
-ObjectDetNet is an easy, flexible, open-source object detection framework which allows you to easily train, resume & 
+*ObjectDetNet* is an easy, flexible, open-source object detection framework which allows you to easily train, resume & 
 prototype training sessions, run inference and flexibly work with checkpoints in a production grade environment.
 
 At the core of the *ObjectDetNet* framework is the ***checkpoint object***. The ***checkpoint object*** Which is a json, 
@@ -89,7 +89,7 @@ class AdapterModel:
     def checkpoint_path(self):
         raise NotImplementedError
 
-    def save(self, save_path):
+    def save(self, save_path='checkpoint.pt'):
         raise NotImplementedError
 
     def predict(self, checkpoint_path='checkpoint.pt', output_dir='checkpoint0'):
