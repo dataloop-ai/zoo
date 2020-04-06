@@ -3,6 +3,7 @@
 prototype training sessions, run inference and flexibly work with checkpoints in a production grade environment.
 
 ## Quick Start
+Copy and paste this into your command line
 ```
 mkdir data
 cd data
@@ -12,6 +13,15 @@ git clone https://github.com/dataloop-ai/ObjectDetNet.git
 cd ObjectDetNet
 python main.py --train
 ```
+After training just run:
+```
+python main.py --predict 
+# OR 
+python main.py --predict_single
+# to predict a single item
+```
+
+To change the data you run on or the parameters of your model just update the example_checkpoint.pt file!
 
 At the core of the *ObjectDetNet* framework is the ***checkpoint object***. The ***checkpoint object*** is a json, 
 pt or json styled file to be loaded into python as a dictionary. ***Checkpoint objects*** aren't just used for training, 
