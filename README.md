@@ -1,9 +1,9 @@
 ## Getting started with the ***ObjectDetNet***
-ObjectDetNet is an easy, flexible, open-source object detection framework which allows you to easily train & resume 
-training sessions, run inference and flexibly work with checkpoints for a production grade environment.
+ObjectDetNet is an easy, flexible, open-source object detection framework which allows you to easily train, resume & 
+prototype training sessions, run inference and flexibly work with checkpoints in a production grade environment.
 
-At the core of the *ObjectDetNet* framework is the ***checkpoint object***. The ***checkpoint object*** Which is a json or json styled file to be 
-loaded into python as a dictionary. Bellow is an example of what a checkpoint object might look like.
+At the core of the *ObjectDetNet* framework is the ***checkpoint object***. The ***checkpoint object*** Which is a json, 
+pt or json styled file to be loaded into python as a dictionary. Bellow is an example of how a checkpoint object might look.
 ```
 ├── {} devices
 │   ├── {} gpu_index
