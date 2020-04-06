@@ -2,8 +2,10 @@
 *ObjectDetNet* is an easy, flexible, open-source object detection framework which allows you to easily train, resume & 
 prototype training sessions, run inference and flexibly work with checkpoints in a production grade environment.
 
-#Quick Start
+## Quick Start
 ```
+clone https://github.com/dataloop-ai/ObjectDetNet.git
+cd ObjectDetNet
 python main.py --train
 ```
 
