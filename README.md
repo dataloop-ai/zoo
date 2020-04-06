@@ -5,6 +5,9 @@ prototype training sessions, run inference and flexibly work with checkpoints in
 ## Quick Start
 Copy and paste this into your command line
 ```
+#run in docker 
+docker run --rm -it --init  --runtime=nvidia  --ipc=host  -e NVIDIA_VISIBLE_DEVICES=0 buffalonoam/zazu-image:0.3 bash
+
 mkdir data
 cd data
 git clone https://github.com/dataloop-ai/tiny_coco.git
