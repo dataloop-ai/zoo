@@ -1,7 +1,9 @@
-## Getting started with the ***ObjectDetectionZoo***
+## Getting started with the ***ObjectDetNet***
+ObjectDetNet is an easy, flexible, open-source object detection framework which allows you to easily train & resume 
+training sessions, run inference and flexibly work with checkpoints for a production grade environment.
 
-## The ObjectDetectionZoo checkpoint
-The checkpoint file is a key component to running a model in the zoo
+At the core of the *ObjectDetNet* framework is the ***checkpoint object***. The ***checkpoint object*** Which is a json or json styled file to be 
+loaded into python as a dictionary. Bellow is an example of what a checkpoint object might look like.
 ```
 ├── {} devices
 │   ├── {} gpu_index
@@ -37,14 +39,11 @@ The checkpoint file is a key component to running a model in the zoo
 ├── {} epoch
 │       ├── 18
 ```
-The model, optimizer and scheduler would be checkpoints for resuming a training session.
+The model, optimizer and scheduler keys are necessary for resuming a training session.
 
 
-
-
-## Adding your own model to the ***ObjectDetectionZoo***
-We encourage you to add your own model to the *ZazuML model zoo* and become an 
-official contributor to the project. 
+## Adding your own model to the ***ObjectDetNet***
+We encourage you to add your own model to the *ZazuML model zoo* and become a contributor to the project. 
 
 ### Example of the directory structure of your model
 ```
@@ -69,36 +68,40 @@ class and a ***predict*** function, which serves as an adapter between ***ZazuML
 class AdapterModel:
 
     def load(self, checkpoint_path='checkpoint.pt'):
-        pass
+        raise NotImplementedError
 
     def reformat(self):
         pass
 
-    def data_loader(self):
-        pass
-
-    def preprocess(self):
-        pass
+    def preprocess(self, batch):
+        return batch
 
     def build(self):
         pass
-        
+
     def train(self):
         pass
-    
+
     def get_checkpoint(self):
         pass
 
-    def get_metrics(self):
-        pass
+    @property
+    def checkpoint_path(self):
+        raise NotImplementedError
 
-def predict(home_path, checkpoint_path):
-    pass
+    def save(self, save_path):
+        raise NotImplementedError
+
+    def predict(self, checkpoint_path='checkpoint.pt', output_dir='checkpoint0'):
+        raise NotImplementedError
+
+    def predict_single_image(self, image_path, checkpoint_path='checkpoint.pt'):
+        raise NotImplementedError
 ```
 The "init", "train", "get_checkpoint" and "get_metrics" methods are mandatory methods for running your model. 
 The methods are run in the order of the example above, i.e. first the "init" then "reformat" and so on . . 
 
-**Init** method is where you pass all the important information to your model 
+**load** method is where you pass all the important information to your model 
 
 - device - gpu index to be specified to all parameters and operations requiring gpu in this specific trial
 - model_specs - contains model configurations and information relevant to the location of your data and annotation type
