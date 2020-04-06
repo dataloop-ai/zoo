@@ -1,4 +1,48 @@
-## Adding your own model to the ***ZaZoo***
+## Getting started with the ***ObjectDetectionZoo***
+
+## The ObjectDetectionZoo checkpoint
+The checkpoint file is a key component to running a model in the zoo
+```
+├── {} devices
+│   ├── {} gpu_index
+│       ├── 0
+├── {} model_specs
+│   ├── {} name
+│       ├── retinanet
+│   ├── {} training_configs
+│       ├── {} depth
+│           ├── 152
+│       ├── {} input_size
+│       ├── {} learning_rate
+│   ├── {} data
+│       ├── {} home_path
+│       ├── {} annotation_type
+│           ├── coco
+│       ├── {} dataset_name
+├── {} hp_values
+│       ├── {} learning_rate
+│       ├── {} tuner/epochs
+│       ├── {} tuner/initial_epoch
+├── {} labels
+│       ├── {} 0
+│           ├── Rodent
+│       ├── {} 1
+│       ├── {} 2
+├── {} metrics
+│       ├── {} val_accuracy
+│           ├── 0.834
+├── {} model
+├── {} optimizer
+├── {} scheduler
+├── {} epoch
+│       ├── 18
+```
+The model, optimizer and scheduler would be checkpoints for resuming a training session.
+
+
+
+
+## Adding your own model to the ***ObjectDetectionZoo***
 We encourage you to add your own model to the *ZazuML model zoo* and become an 
 official contributor to the project. 
 
@@ -24,7 +68,7 @@ class and a ***predict*** function, which serves as an adapter between ***ZazuML
 ```
 class AdapterModel:
 
-    def __init__(self, device, model_specs, hp_values, final):
+    def load(self, checkpoint_path='checkpoint.pt'):
         pass
 
     def reformat(self):
@@ -59,7 +103,6 @@ The methods are run in the order of the example above, i.e. first the "init" the
 - device - gpu index to be specified to all parameters and operations requiring gpu in this specific trial
 - model_specs - contains model configurations and information relevant to the location of your data and annotation type
 - hp_values - are the final hyper parameter values passed to this specific trial
-- final - indicates weather the model is in *trial* mode or *training* mode
 
 **reformat** method is where you'd be expected to reformat the input image annotations into a format your
 model can handle. Your model is required to handle CSV and Coco styled annotations at the very least.
