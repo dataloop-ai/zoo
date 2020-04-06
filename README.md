@@ -81,6 +81,11 @@ To run inference your checkpoint will need:
 
 If you'd like to customize by adding your own model, check out [Adding a Model](./ADDMODEL.md)
 
+### Feel free to reach out with any questions
+WeChat: BuffaloNoam   
+Line: buffalonoam   
+WhatsApp: +972524226459  
+
 ## Refrences
 Thank you to these repositories for their contributions to the ***ObjectDetNet***
 
