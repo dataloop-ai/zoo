@@ -4,7 +4,7 @@ prototype training sessions, run inference and flexibly work with checkpoints in
 
 ## Quick Start
 ```
-clone https://github.com/dataloop-ai/ObjectDetNet.git
+git clone https://github.com/dataloop-ai/ObjectDetNet.git
 cd ObjectDetNet
 python main.py --train
 ```

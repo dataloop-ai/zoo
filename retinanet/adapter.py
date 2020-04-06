@@ -70,6 +70,8 @@ class AdapterModel:
             new_trial_id = self.configs['tuner/new_trial_id']
         except Exception as e:
             raise Exception('make sure a new trial id was passed, got this error: ' + repr(e))
+        if 'tuner/initial_epoch' not in self.configs.keys():
+            self.configs['tuner/initial_epoch'] = 0
 
         if self.annotation_type == 'coco':
             self.home_path = self.model_specs['data']['home_path']
