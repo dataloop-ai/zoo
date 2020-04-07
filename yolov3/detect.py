@@ -9,7 +9,7 @@ from .yolo_utils.utils import *
 def detect(data_dict, device='', checkpoint_path='checkpoint.pt', img_size=320, out='output', cfg_path='cfg/yolov3-custom.cfg',
            half=True, view_img=False, save_txt=False, save_img=True, conf_thres=0.3, nms_thres=0.5):
     img_size = (320, 192) if ONNX_EXPORT else img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
-    this_path = os.path.join(os.getcwd(), 'zoo/yolov3')
+    this_path = os.path.join(os.getcwd(), 'ObjectDetNet/yolov3')
     config_path = os.path.join(this_path, cfg_path)
     source = data_dict['predict_on']
     # Initialize

@@ -20,7 +20,7 @@ except:
 def detect(checkpoint, output_dir, visualize=False):
 
     home_path = checkpoint['model_specs']['data']['home_path']
-    if os.getcwd().split('/')[-1] == 'zoo':
+    if os.getcwd().split('/')[-1] == 'ObjectDetNet':
         home_path = os.path.join('..', home_path)
     # must have a file to predict on called "predict_on"
     pred_on_path = os.path.join(home_path, 'predict_on')

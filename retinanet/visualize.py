@@ -9,7 +9,7 @@ from shutil import copyfile
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from zoo.retinanet.dataloaders import PredDataset, collater, Resizer, UnNormalizer, Normalizer
+from ObjectDetNet.retinanet.dataloaders import PredDataset, collater, Resizer, UnNormalizer, Normalizer
 
 
 def detect(home_path, checkpoint_path):

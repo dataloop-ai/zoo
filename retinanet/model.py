@@ -11,7 +11,7 @@ from . import losses
 if torch.cuda.is_available():
     from .lib.nms.gpu_nms import gpu_nms
 else:
-    from zoo.retinanet.lib.nms import cpu_nms
+    from ObjectDetNet.retinanet.lib.nms import cpu_nms
 
 
 def nms(dets, thresh):

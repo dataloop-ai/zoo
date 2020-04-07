@@ -824,4 +824,4 @@ jitter=.3
 ignore_thresh = .7
 truth_thresh = 1
 random=1
-" >> zoo/yolov3/cfg/yolov3-custom.cfg
+" >> ObjectDetNet/yolov3/cfg/yolov3-custom.cfg

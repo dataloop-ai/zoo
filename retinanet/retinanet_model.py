@@ -22,15 +22,15 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 class RetinaModel:
     def __init__(self, device, home_path, save_trial_id, resume_trial_id=None, checkpoint=None):
-        if os.getcwd().split('/')[-1] == 'zoo':
+        if os.getcwd().split('/')[-1] == 'ObjectDetNet':
             home_path = os.path.join('..', home_path)
         self.home_path = home_path
         self.device = device
         self.checkpoint = checkpoint
-        if os.getcwd().split('/')[-1] == 'zoo':
+        if os.getcwd().split('/')[-1] == 'ObjectDetNet':
             this_path = os.path.join(os.getcwd(), 'retinanet')
         else:
-            this_path = os.path.join(os.getcwd(), 'zoo/retinanet')
+            this_path = os.path.join(os.getcwd(), 'ObjectDetNet/retinanet')
         self.weights_dir_path = os.path.join(this_path, 'weights')
 
         if resume_trial_id:
