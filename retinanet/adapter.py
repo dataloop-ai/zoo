@@ -166,20 +166,25 @@ class AdapterModel:
             checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
         return detect_single_image(checkpoint, image_path)
 
+    def predict_item(self, item, checkpoint_path, with_upload=True, model_name='retinanet'):
+        filepath = item.download()
+        results_path = self.predict_single_image(filepath, checkpoint_path)
+        if with_upload:
+            with open(results_path) as fg:
+                results = fg.readlines()
+            builder = item.annotations.builder()
+            for result in results:
+                result_ls = result.split(' ')
+                builder.add(dl.Box(left=int(result_ls[2]), top=int(result_ls[3]), right=int(result_ls[4]),
+                                    bottom=int(result_ls[5]), label=result_ls[0]),
+                            model_info={'confidence': result_ls[1], 'name': model_name})
+            item.annotations.upload(builder)
+
+        dirname = os.path.dirname(filepath)
+        return dirname
+
     def predict_items(self, items, checkpoint_path, with_upload=True, model_name='retinanet'):
         for item in items:
-            filepath = item.download()
-            results_path = self.predict_single_image(filepath, checkpoint_path)
-            if with_upload:
-                with open(results_path) as fg:
-                    results = fg.readlines()
-                builder = item.annotations.builder()
-                for result in results:
-                    result_ls = result.split(' ')
-                    builder.add(dl.Box(left=int(result_ls[2]), top=int(result_ls[3]), right=int(result_ls[4]),
-                                        bottom=int(result_ls[5]), label=result_ls[0]),
-                                model_info={'confidence': result_ls[1], 'name': model_name})
-                item.annotations.upload(builder)
+            dirname = self.predict_item(item, checkpoint_path, with_upload, model_name)
 
-            dirname = os.path.dirname(filepath)
         return dirname
