@@ -158,17 +158,32 @@ class AdapterModel:
             checkpoint = self.get_checkpoint()
             return detect(checkpoint, output_dir)
 
-    def predict_single_image(self, image_path, checkpoint_path='checkpoint.pt'):
-
+    def load_inference(self, checkpoint_path):
         if torch.cuda.is_available():
-            checkpoint = torch.load(checkpoint_path)
+            self.inference_checkpoint = torch.load(checkpoint_path)
         else:
-            checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-        return detect_single_image(checkpoint, image_path)
+            self.inference_checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
 
-    def predict_item(self, item, checkpoint_path, with_upload=True, model_name='retinanet'):
+    def load_from_inference_checkpoint(self, model_id, checkpoint_id):
+        model = dl.models.get(model_id=model_id)
+        checkpoint = model.checkpoints.get(checkpoint_id=checkpoint_id)
+        checkpoint_path = checkpoint.download(local_path=os.getcwd())
+        self.load_inference(checkpoint_path=checkpoint_path)
+        self.model = model
+
+    def predict_single_image(self, image_path, checkpoint_path='checkpoint.pt'):
+        if hasattr(self, 'inference_checkpoint'):
+            return detect_single_image(self.inference_checkpoint, image_path)
+        else:
+            if torch.cuda.is_available():
+                checkpoint = torch.load(checkpoint_path)
+            else:
+                checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+            return detect_single_image(checkpoint, image_path)
+
+    def predict_item(self, item, checkpoint_path=None, with_upload=True, model_name='retinanet'):
         filepath = item.download()
-        results_path = self.predict_single_image(filepath, checkpoint_path)
+        results_path = self.predict_single_image(image_path=filepath, checkpoint_path=checkpoint_path)
         if with_upload:
             with open(results_path) as fg:
                 results = fg.readlines()
