@@ -1,23 +1,28 @@
 from retinanet import AdapterModel
-from .dataloop_services import push_package, deploy_predict_item
+from dataloop_services import push_package, deploy_predict_item, create_trigger
 import argparse
 import dtlpy as dl
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--train", action='store_true', default=False)
 parser.add_argument("--predict", action='store_true', default=False)
 parser.add_argument("--predict_single", action='store_true', default=False)
 parser.add_argument("--predict_item", action='store_true', default=False)
-parser.add_argument("--deploy_predict_item", action='store_true', default=False)
+parser.add_argument("--deploy", action='store_true', default=False)
+parser.add_argument("--trigger", action='store_true', default=False)
 args = parser.parse_args()
+
 
 def maybe_login():
     try:
-        dl.setenv('prod')
+        dl.setenv('dev')
     except:
         dl.login()
-        dl.setenv('prod')
+        dl.setenv('dev')
+
 
 def maybe_do_deployment_stuff():
     if args.deploy:
@@ -26,13 +31,21 @@ def maybe_do_deployment_stuff():
         maybe_login()
         global_project = dl.projects.get(project_name=global_project_name)
         global_package_obj = push_package(global_project)
+        logger.info('package pushed')
         try:
-            predict_item_service = deploy_predict_item(package=global_package_obj)
+            deploy_predict_item(package=global_package_obj,
+                                model_id='5e92d9b6629887544730bb4c',
+                                checkpoint_id='5e92e4b1e37a96cd28811a1a')
+            logger.info('service deployed')
         except:
-            predict_item_service.delete()
+            pass
+def maybe_create_trigger():
+    if args.trigger:
+        create_trigger()
 
 
 maybe_do_deployment_stuff()
+maybe_create_trigger()
 
 model = AdapterModel()
 if args.train:
@@ -55,5 +68,3 @@ if args.predict_item:
     # items = [item for page in pages for item in page]
     items = [item]
     model.predict_items(items, 'checkpoint.pt')
-
-
