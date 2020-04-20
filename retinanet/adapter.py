@@ -1,7 +1,16 @@
 import os
 # from dataloop_services.dl_to_csv import create_annotations_txt
-from .retinanet_model import RetinaModel
-from .predict import detect, detect_single_image
+original_wd = os.getcwd()
+print('original working dir is : ' + original_wd)
+os.chdir(os.path.dirname(__file__))
+print('changed working dir to : ' + os.getcwd())
+print(__package__ in ['', None])
+if __package__ in ['', None]:
+    from retinanet_model import RetinaModel
+    from predict import detect, detect_single_image
+else:
+    from .retinanet_model import RetinaModel
+    from .predict import detect, detect_single_image
 from copy import deepcopy
 import random
 import time
@@ -24,11 +33,11 @@ def generate_trial_id():
 
 class AdapterModel:
 
-    def load_from_checkpoint(self, local_path, model_id, checkpoint_id):
+    def load_from_checkpoint(self, model_id, checkpoint_id):
         model = dl.models.get(model_id=model_id)
         checkpoint = model.checkpoints.get(checkpoint_id=checkpoint_id)
-        checkpoint.download(local_path=local_path)
-        self.load(checkpoint_path=local_path)
+        checkpoint_path = checkpoint.download(local_path=os.getcwd())
+        self.load(checkpoint_path=checkpoint_path)
         self.model = model
 
     def load(self, checkpoint_path='checkpoint.pt'):
@@ -203,3 +212,6 @@ class AdapterModel:
             dirname = self.predict_item(item, checkpoint_path, with_upload, model_name)
 
         return dirname
+
+os.chdir(original_wd)
+print('changed working dir back to : ' + original_wd)

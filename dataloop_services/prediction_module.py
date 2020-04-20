@@ -21,8 +21,11 @@ class ServiceRunner(dl.BaseServiceRunner):
         """
         model = dl.models.get(model_id=model_id)
         self.name = model.name
-        os.mkdir(self.name)
         self.adapter = model.build(local_path=os.path.join(os.getcwd(), self.name))
+        self.load_new_inference_checkpoint(model_id=model_id,
+                                           checkpoint_id=checkpoint_id)
+
+    def load_new_inference_checkpoint(self, model_id, checkpoint_id):
         self.adapter.load_from_inference_checkpoint(model_id=model_id,
                                                     checkpoint_id=checkpoint_id)
 

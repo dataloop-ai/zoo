@@ -12,7 +12,8 @@ def deploy_predict_item(package, model_id, checkpoint_id):
                                           runtime={'gpu': False,
                                                    'numReplicas': 1,
                                                    'concurrency': 2,
-                                                   'runnerImage': 'buffalonoam/zazu-image:0.3'
+                                                   'runnerImage': 'buffalonoam/zazu-image:0.3',
+                                                   'podType': 'regular-xs'
                                                    },
                                           init_input=input_to_init)
 
@@ -24,17 +25,20 @@ def push_package(project):
     model_input = dl.FunctionIO(type='Json', name='model_id')
     checkpoint_input = dl.FunctionIO(type='Json', name='checkpoint_id')
 
-    model_inputs = [item_input]
-    predict_item_function = dl.PackageFunction(name='predict_single_item', inputs=model_inputs, outputs=[],
+    predict_item_function = dl.PackageFunction(name='predict_single_item', inputs=[item_input], outputs=[],
                                                description='')
-    predict_item_module = dl.PackageModule(entry_point='dataloop_services/prediction_module.py',
-                                           name='predict_item_module',
-                                           functions=[predict_item_function],
-                                           init_inputs=[model_input, checkpoint_input])
+    load_checkpoint_function = dl.PackageFunction(name='load_new_inference_checkpoint',
+                                                  inputs=[model_input, checkpoint_input], outputs=[],
+                                                  description='')
 
+    predict_item_module = dl.PackageModule(entry_point='prediction_module.py',
+                                           name='predict_item_module',
+                                           functions=[predict_item_function, load_checkpoint_function],
+                                           init_inputs=[model_input, checkpoint_input])
+    module_path = os.path.join(os.getcwd(), 'dataloop_services')
     package_obj = project.packages.push(
         package_name='ObDetNet',
-        src_path=os.getcwd(),
+        src_path=module_path,
         modules=[predict_item_module])
 
     return package_obj

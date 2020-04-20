@@ -3,12 +3,17 @@ import time
 import os
 import skimage
 import cv2
-from . import model
 import torch
-from .utils import combine_values
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from .dataloaders import PredDataset, collater, Resizer, Normalizer, UnNormalizer
+if __package__ == '':
+    import model
+    from utils import combine_values
+    from dataloaders import PredDataset, collater, Resizer, Normalizer, UnNormalizer
+else:
+    from . import model
+    from .utils import combine_values
+    from .dataloaders import PredDataset, collater, Resizer, Normalizer, UnNormalizer
 try:
     from logging_utils import logginger
     logger = logginger(__name__)

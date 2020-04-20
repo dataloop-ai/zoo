@@ -5,9 +5,14 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 from torchvision import transforms
-from . import model, csv_eval
-from .dataloaders import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
-    Augmenter, Normalizer
+if __package__ == '':
+    import model, csv_eval
+    from dataloaders import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
+        Augmenter, Normalizer
+else:
+    from . import model, csv_eval
+    from .dataloaders import CocoDataset, CSVDataset, collater, Resizer, AspectRatioBasedSampler, \
+        Augmenter, Normalizer
 from torch.utils.data import DataLoader
 
 try:
