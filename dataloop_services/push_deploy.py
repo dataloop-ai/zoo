@@ -9,11 +9,11 @@ def deploy_predict_item(package, model_id, checkpoint_id):
     service_obj = package.services.deploy(service_name='predict',
                                           module_name='predict_item_module',
                                           package=package,
-                                          runtime={'gpu': False,
+                                          runtime={'gpu': True,
                                                    'numReplicas': 1,
                                                    'concurrency': 2,
                                                    'runnerImage': 'buffalonoam/zazu-image:0.3',
-                                                   'podType': 'regular-xs'
+                                                   'podType': 'gpu-k80-m'
                                                    },
                                           init_input=input_to_init)
 

@@ -1,16 +1,10 @@
 import os
 # from dataloop_services.dl_to_csv import create_annotations_txt
-original_wd = os.getcwd()
-print('original working dir is : ' + original_wd)
-os.chdir(os.path.dirname(__file__))
-print('changed working dir to : ' + os.getcwd())
-print(__package__ in ['', None])
-if __package__ in ['', None]:
-    from retinanet_model import RetinaModel
-    from predict import detect, detect_single_image
-else:
-    from .retinanet_model import RetinaModel
-    from .predict import detect, detect_single_image
+import sys
+sys.path.insert(1, os.path.dirname(__file__))
+from retinanet_model import RetinaModel
+from predict import detect, detect_single_image
+
 from copy import deepcopy
 import random
 import time
@@ -41,6 +35,7 @@ class AdapterModel:
         self.model = model
 
     def load(self, checkpoint_path='checkpoint.pt'):
+        # the only necessary keys for load are ['devices', 'model_specs']
         trial_checkpoint = torch.load(checkpoint_path)
 
         devices = trial_checkpoint['devices']
@@ -148,11 +143,11 @@ class AdapterModel:
         checkpoint = self.get_checkpoint()
         torch.save(checkpoint, save_path)
 
-    def upload_checkpoint(self, checkpoint_name, model_id=None):
+    def upload_checkpoint(self, model_id=None, checkpoint_name='checkpoint'):
         if model_id:
             model = dl.models.get(model_id=model_id)
             self.model = model
-        save_path = checkpoint_name
+        save_path = os.path.join(os.getcwd(), checkpoint_name + '.pt')
         self.save(save_path)
         self.model.checkpoints.upload(checkpoint_name=checkpoint_name, local_path=save_path)
 
@@ -212,6 +207,3 @@ class AdapterModel:
             dirname = self.predict_item(item, checkpoint_path, with_upload, model_name)
 
         return dirname
-
-os.chdir(original_wd)
-print('changed working dir back to : ' + original_wd)

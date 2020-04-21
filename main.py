@@ -14,6 +14,7 @@ parser.add_argument("--predict_single", action='store_true', default=False)
 parser.add_argument("--predict_item", action='store_true', default=False)
 parser.add_argument("--deploy", action='store_true', default=False)
 parser.add_argument("--trigger", action='store_true', default=False)
+# this is the new checkpoint to be pushed to prediction service
 parser.add_argument("--new_checkpoint", action='store_true', default=False)
 args = parser.parse_args()
 
