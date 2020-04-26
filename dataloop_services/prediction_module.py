@@ -27,7 +27,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         self.load_new_inference_checkpoint(model_id=model_id,
                                            checkpoint_id=checkpoint_id)
 
-    def load_new_inference_checkpoint(self, model_id, checkpoint_id):
+    def load_new_inference_checkpoint(self, model_id, checkpoint_id, progress=None):
         self.adapter.load_from_inference_checkpoint(model_id=model_id,
                                                     checkpoint_id=checkpoint_id)
         logger.info('new checkpoint loaded into adapter object')

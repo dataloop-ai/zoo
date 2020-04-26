@@ -15,6 +15,7 @@ def deploy_predict_item(package, model_id, checkpoint_id):
                                                    'runnerImage': 'buffalonoam/zazu-image:0.3',
                                                    'podType': 'gpu-k80-m'
                                                    },
+                                          execution_timeout=60 * 60 * 1e10,
                                           init_input=input_to_init)
 
     return service_obj

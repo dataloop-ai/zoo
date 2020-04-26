@@ -5,6 +5,7 @@ import dtlpy as dl
 import json
 import time
 import logging
+
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
@@ -42,9 +43,12 @@ def maybe_do_deployment_stuff():
             logger.info('service deployed')
         except:
             pass
+
+
 def maybe_create_trigger():
     if args.trigger:
         create_trigger()
+
 
 maybe_login()
 maybe_do_deployment_stuff()
@@ -79,7 +83,8 @@ if args.new_checkpoint:
     model_input = dl.FunctionIO(type='Json', name='model_id', value=model_id)
     checkpoint_input = dl.FunctionIO(type='Json', name='checkpoint_id', value=checkpoint_id)
     inputs = [model_input, checkpoint_input]
-    execution_obj = service.execute(execution_input=inputs, function_name='load_new_inference_checkpoint')
+    execution_obj = service.execute(execution_input=inputs, function_name='load_new_inference_checkpoint',
+                                    project_id='fcdd792b-5146-4c62-8b27-029564f1b74e')
     while execution_obj.latest_status['status'] != 'success':
         time.sleep(5)
         execution_obj = dl.executions.get(execution_id=execution_obj.id)
