@@ -32,11 +32,11 @@ def detect(checkpoint, output_dir, visualize=False):
 
     #create output path
     output_path = os.path.join(home_path, 'predictions', output_dir)
-    if not os.path.exists(os.path.join(home_path, 'predictions')):
-        os.mkdir(os.path.join(home_path, 'predictions'))
-    if os.path.exists(output_path):
+    try:
+        os.makedirs(output_path)
+    except FileExistsError:
         raise Exception('there are already predictions for model: ' + output_dir)
-    os.mkdir(output_path)
+
     try:
         logger.info('inside ' + str(pred_on_path) + ': ' + str(os.listdir(pred_on_path)))
         dataset_val = PredDataset(pred_on_path=pred_on_path,
