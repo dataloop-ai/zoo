@@ -1,7 +1,10 @@
 import os
 # from dataloop_services.dl_to_csv import create_annotations_txt
-from .retinanet_model import RetinaModel
-from .predict import detect, detect_single_image
+import sys
+sys.path.insert(1, os.path.dirname(__file__))
+from retinanet_model import RetinaModel
+from predict import detect, detect_single_image
+
 from copy import deepcopy
 import random
 import time
@@ -24,14 +27,15 @@ def generate_trial_id():
 
 class AdapterModel:
 
-    def load_from_checkpoint(self, local_path, model_id, checkpoint_id):
+    def load_from_checkpoint(self, model_id, checkpoint_id):
         model = dl.models.get(model_id=model_id)
         checkpoint = model.checkpoints.get(checkpoint_id=checkpoint_id)
-        checkpoint.download(local_path=local_path)
-        self.load(checkpoint_path=local_path)
+        checkpoint_path = checkpoint.download(local_path=os.getcwd())
+        self.load(checkpoint_path=checkpoint_path)
         self.model = model
 
     def load(self, checkpoint_path='checkpoint.pt'):
+        # the only necessary keys for load are ['devices', 'model_specs']
         trial_checkpoint = torch.load(checkpoint_path)
 
         devices = trial_checkpoint['devices']
@@ -139,36 +143,49 @@ class AdapterModel:
         checkpoint = self.get_checkpoint()
         torch.save(checkpoint, save_path)
 
-    def upload_checkpoint(self, checkpoint_name, model_id=None):
+    def upload_checkpoint(self, model_id=None, checkpoint_name='checkpoint'):
         if model_id:
             model = dl.models.get(model_id=model_id)
             self.model = model
-        save_path = checkpoint_name
+        save_path = os.path.join(os.getcwd(), checkpoint_name + '.pt')
         self.save(save_path)
         self.model.checkpoints.upload(checkpoint_name=checkpoint_name, local_path=save_path)
 
-    def predict(self, checkpoint_path='checkpoint.pt', output_dir='checkpoint0'):
+    def predict(self, output_dir='checkpoint0', checkpoint_path='checkpoint.pt'):
         try:
-            if torch.cuda.is_available():
-                checkpoint = torch.load(checkpoint_path)
-            else:
-                checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-            return detect(checkpoint, output_dir, visualize=True)
+            return detect(self.inference_checkpoint, output_dir, visualize=True)
         except:
-            checkpoint = self.get_checkpoint()
-            return detect(checkpoint, output_dir)
+            try:
+                self.load_inference(checkpoint_path)
+                return detect(self.inference_checkpoint, output_dir, visualize=True)
+            except:
+                checkpoint = self.get_checkpoint()
+                return detect(checkpoint, output_dir)
+
+    def load_inference(self, checkpoint_path):
+        if torch.cuda.is_available():
+            self.inference_checkpoint = torch.load(checkpoint_path)
+        else:
+            self.inference_checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+        return self.inference_checkpoint
+
+    def load_from_inference_checkpoint(self, model_id, checkpoint_id):
+        model = dl.models.get(model_id=model_id)
+        checkpoint = model.checkpoints.get(checkpoint_id=checkpoint_id)
+        checkpoint_path = checkpoint.download(local_path=os.getcwd())
+        self.load_inference(checkpoint_path=checkpoint_path)
+        self.model = model
 
     def predict_single_image(self, image_path, checkpoint_path='checkpoint.pt'):
-
-        if torch.cuda.is_available():
-            checkpoint = torch.load(checkpoint_path)
+        if hasattr(self, 'inference_checkpoint'):
+            return detect_single_image(self.inference_checkpoint, image_path)
         else:
-            checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-        return detect_single_image(checkpoint, image_path)
+            self.load_inference(checkpoint_path)
+            return detect_single_image(self.inference_checkpoint, image_path)
 
-    def predict_item(self, item, checkpoint_path, with_upload=True, model_name='retinanet'):
+    def predict_item(self, item, checkpoint_path=None, with_upload=True, model_name='retinanet'):
         filepath = item.download()
-        results_path = self.predict_single_image(filepath, checkpoint_path)
+        results_path = self.predict_single_image(image_path=filepath, checkpoint_path=checkpoint_path)
         if with_upload:
             with open(results_path) as fg:
                 results = fg.readlines()
