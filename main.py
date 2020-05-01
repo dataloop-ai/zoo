@@ -20,12 +20,12 @@ parser.add_argument("--new_checkpoint", action='store_true', default=False)
 args = parser.parse_args()
 
 
-def maybe_login():
+def maybe_login(env):
     try:
-        dl.setenv('dev')
+        dl.setenv(env)
     except:
         dl.login()
-        dl.setenv('dev')
+        dl.setenv(env)
 
 
 def maybe_do_deployment_stuff():
@@ -50,7 +50,7 @@ def maybe_create_trigger():
         create_trigger()
 
 
-maybe_login()
+maybe_login('prod')
 maybe_do_deployment_stuff()
 maybe_create_trigger()
 
