@@ -12,6 +12,8 @@ import hashlib
 import json
 import torch
 import dtlpy as dl
+import logging
+logger = logging.getLogger(__name__)
 
 
 def combine_values(configs_under, configs_over):
@@ -129,10 +131,13 @@ class AdapterModel:
                                    init_epoch=self.configs['tuner/initial_epoch'])
 
     def get_checkpoint(self):
+        logger.info('getting best checkpoint')
         checkpoint = self.retinanet_model.get_best_checkpoint()
+        logging.info('got best checkpoint')
         checkpoint['hp_values'] = self.hp_values
         checkpoint['model_specs'] = self.model_specs
         checkpoint['devices'] = self.devices
+        logging.info('checkpoint keys: ' + str(checkpoint.keys()))
         return checkpoint
 
     @property
@@ -142,6 +147,7 @@ class AdapterModel:
     def save(self, save_path='checkpoint.pt'):
         checkpoint = self.get_checkpoint()
         torch.save(checkpoint, save_path)
+        return save_path
 
     def upload_checkpoint(self, model_id=None, checkpoint_name='checkpoint'):
         if model_id:
@@ -205,3 +211,6 @@ class AdapterModel:
             dirname = self.predict_item(item, checkpoint_path, with_upload, model_name)
 
         return dirname
+
+    def delete_stuff(self):
+        self.retinanet_model.delete_stuff()

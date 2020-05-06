@@ -1,5 +1,7 @@
 import collections
 import os
+import glob
+import shutil
 import numpy as np
 import torch
 import torch.optim as optim
@@ -253,6 +255,14 @@ class RetinaModel:
         # Delete checkpoint
         del checkpoint
 
-
+    def delete_stuff(self):
+        files_ls = glob.glob(os.path.join(self.weights_dir_path, 'l*'))
+        files_ls += glob.glob(os.path.join(self.weights_dir_path, 'b*'))
+        for file in files_ls:
+            try:
+                os.remove(file)
+            except:
+                logger.info("Error while deleting file : " + file)
+        shutil.rmtree(os.path.join(os.getcwd(), 'runs'))
 if __name__ == '__main__':
     pass
