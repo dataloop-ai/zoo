@@ -22,9 +22,9 @@ except:
     logger = logging.getLogger(__name__)
 
 
-def detect(checkpoint, output_dir, visualize=False):
-
-    home_path = checkpoint['model_specs']['data']['home_path']
+def detect(checkpoint, output_dir, home_path=None, visualize=False):
+    if home_path is None:
+        home_path = checkpoint['model_specs']['data']['home_path']
     if os.getcwd().split('/')[-1] == 'ObjectDetNet':
         home_path = os.path.join('..', home_path)
     # must have a file to predict on called "predict_on"

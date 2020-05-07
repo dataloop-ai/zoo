@@ -157,13 +157,13 @@ class AdapterModel:
         self.save(save_path)
         self.model.checkpoints.upload(checkpoint_name=checkpoint_name, local_path=save_path)
 
-    def predict(self, output_dir='checkpoint0', checkpoint_path='checkpoint.pt'):
+    def predict(self, output_dir='checkpoint0', checkpoint_path='checkpoint.pt', home_path=None):
         try:
-            return detect(self.inference_checkpoint, output_dir, visualize=True)
+            return detect(self.inference_checkpoint, output_dir, home_path=home_path, visualize=True)
         except:
             try:
                 self.load_inference(checkpoint_path)
-                return detect(self.inference_checkpoint, output_dir, visualize=True)
+                return detect(checkpoint=self.inference_checkpoint, output_dir=output_dir, home_path=home_path, visualize=True)
             except:
                 checkpoint = self.get_checkpoint()
                 return detect(checkpoint, output_dir)
