@@ -28,31 +28,28 @@ def maybe_login(env):
         dl.setenv(env)
 
 
-def maybe_do_deployment_stuff():
-    if args.deploy:
-        with open('global_configs.json', 'r') as fp:
-            global_project_name = json.load(fp)['project']
+def do_deployment_stuff(model_id, checkpoint_id):
 
-        global_project = dl.projects.get(project_name=global_project_name)
-        global_package_obj = push_package(global_project)
-        logger.info('package pushed')
-        try:
-            deploy_predict_item(package=global_package_obj,
-                                model_id='5e9d56bb7f6a015540d2efb4',
-                                checkpoint_id='5e92e4b1e37a96cd28811a1a')
-            logger.info('service deployed')
-        except:
-            pass
+    with open('global_configs.json', 'r') as fp:
+        global_project_name = json.load(fp)['project']
 
-
-def maybe_create_trigger():
-    if args.trigger:
-        create_trigger()
-
+    global_project = dl.projects.get(project_name=global_project_name)
+    global_package_obj = push_package(global_project)
+    logger.info('package pushed')
+    try:
+        deploy_predict_item(package=global_package_obj,
+                            model_id=model_id,
+                            checkpoint_id=checkpoint_id)
+        logger.info('service deployed')
+    except:
+        pass
 
 maybe_login('prod')
-maybe_do_deployment_stuff()
-maybe_create_trigger()
+
+if args.deploy:
+    do_deployment_stuff(model_id='5e9d56bb7f6a015540d2efb4', checkpoint_id='5e92e4b1e37a96cd28811a1a')
+if args.trigger:
+    create_trigger()
 
 model = AdapterModel()
 if args.train:
