@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.insert(1, os.path.dirname(__file__))
 from retinanet import AdapterModel
 from dataloop_services import push_package, deploy_predict_item, create_trigger
 import argparse
@@ -34,10 +37,10 @@ def do_deployment_stuff(model_id, checkpoint_id):
         global_project_name = json.load(fp)['project']
 
     global_project = dl.projects.get(project_name=global_project_name)
-    global_package_obj = push_package(global_project)
+    package_obj = push_package(global_project)
     logger.info('package pushed')
     try:
-        deploy_predict_item(package=global_package_obj,
+        deploy_predict_item(package=package_obj,
                             model_id=model_id,
                             checkpoint_id=checkpoint_id)
         logger.info('service deployed')

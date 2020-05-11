@@ -1,5 +1,5 @@
 import os
-# from dataloop_services.dl_to_csv import create_annotations_txt
+
 import sys
 sys.path.insert(1, os.path.dirname(__file__))
 from retinanet_model import RetinaModel

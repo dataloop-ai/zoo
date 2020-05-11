@@ -28,11 +28,11 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 
 
 class RetinaModel:
-    def __init__(self, device, home_path, save_trial_id, resume_trial_id=None, checkpoint=None):
+    def __init__(self, device_index, home_path, save_trial_id, resume_trial_id=None, checkpoint=None):
         if os.getcwd().split('/')[-1] == 'ObjectDetNet':
             home_path = os.path.join('..', home_path)
         self.home_path = home_path
-        self.device = device
+        self.device = torch.device(type='cuda', index=device_index)
         self.checkpoint = checkpoint
         if os.getcwd().split('/')[-1] == 'ObjectDetNet':
             this_path = os.path.join(os.getcwd(), 'retinanet')

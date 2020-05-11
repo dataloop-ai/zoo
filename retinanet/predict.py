@@ -23,6 +23,7 @@ except:
 
 
 def detect(checkpoint, output_dir, home_path=None, visualize=False):
+    device = torch.device(type='cuda') if torch.cuda.is_available() else torch.device(type='cpu')
     if home_path is None:
         home_path = checkpoint['model_specs']['data']['home_path']
     if os.getcwd().split('/')[-1] == 'ObjectDetNet':
@@ -51,7 +52,7 @@ def detect(checkpoint, output_dir, home_path=None, visualize=False):
 
         retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
         retinanet.load_state_dict(checkpoint['model'])
-        retinanet = retinanet.cuda()
+        retinanet = retinanet.to(device=device)
         retinanet.eval()
         unnormalize = UnNormalizer()
 
@@ -115,19 +116,20 @@ def detect(checkpoint, output_dir, home_path=None, visualize=False):
                     save_to_path = os.path.join(output_path, img_name)
                     cv2.imwrite(save_to_path, img)
                     cv2.waitKey(0)
-    except:
+    except Exception as e:
         os.remove(output_path)
+        logger.info(e)
 
     return output_path
 
 def detect_single_image(checkpoint, image_path, visualize=False):
-
+    device = torch.device(type='cuda') if torch.cuda.is_available() else torch.device(type='cpu')
     configs = combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
     labels = checkpoint['labels']
     num_classes = len(labels)
     retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
     retinanet.load_state_dict(checkpoint['model'])
-    retinanet = retinanet.cuda()
+    retinanet = retinanet.to(device=device)
     retinanet.eval()
 
     img = skimage.io.imread(image_path)
