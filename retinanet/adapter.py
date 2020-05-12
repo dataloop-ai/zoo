@@ -170,8 +170,10 @@ class AdapterModel:
 
     def load_inference(self, checkpoint_path):
         if torch.cuda.is_available():
+            logger.info('cuda available')
             self.inference_checkpoint = torch.load(checkpoint_path)
         else:
+            logger.info('run on cpu')
             self.inference_checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
         return self.inference_checkpoint
 

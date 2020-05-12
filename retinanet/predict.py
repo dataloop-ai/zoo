@@ -4,6 +4,7 @@ import os
 import skimage
 import cv2
 import torch
+import shutil
 from torch.utils.data import DataLoader
 from torchvision import transforms
 if __package__ == '':
@@ -33,92 +34,96 @@ def detect(checkpoint, output_dir, home_path=None, visualize=False):
 
     #create output path
     output_path = os.path.join(home_path, 'predictions', output_dir)
+
     try:
         os.makedirs(output_path)
     except FileExistsError:
-        raise Exception('there are already predictions for model: ' + output_dir)
+        if output_dir != 'check0':
+            raise Exception('there are already predictions for model: ' + output_dir)
+        else:
+            logger.info('there was already a check0 in place, erasing and predicting again from scratch')
+            shutil.rmtree(output_path)
+            os.makedirs(output_path)
+    logger.info('inside ' + str(pred_on_path) + ': ' + str(os.listdir(pred_on_path)))
+    dataset_val = PredDataset(pred_on_path=pred_on_path,
+                              transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
+    logger.info('dataset prepared')
+    dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
+    logger.info('data loader initialized')
+    labels = checkpoint['labels']
+    logger.info('labels are: ' + str(labels))
+    num_classes = len(labels)
 
-    try:
-        logger.info('inside ' + str(pred_on_path) + ': ' + str(os.listdir(pred_on_path)))
-        dataset_val = PredDataset(pred_on_path=pred_on_path,
-                                  transform=transforms.Compose([Normalizer(), Resizer(min_side=608)])) #TODO make resize an input param
+    configs = combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
+    logger.info('initializing retinanet model')
+    retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
+    logger.info('loading weights')
+    retinanet.load_state_dict(checkpoint['model'])
+    retinanet = retinanet.to(device=device)
+    logger.info('model to device: ' + str(device))
+    retinanet.eval()
+    unnormalize = UnNormalizer()
 
-        dataloader_val = DataLoader(dataset_val, num_workers=0, collate_fn=collater, batch_sampler=None)
+    def draw_caption(image, box, caption):
+        b = np.array(box).astype(int)
+        cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)
 
-        labels = checkpoint['labels']
-        num_classes = len(labels)
+    for idx, data in enumerate(dataloader_val):
+        scale = data['scale'][0]
+        with torch.no_grad():
+            st = time.time()
+            scores, classification, transformed_anchors = retinanet(data['img'].cuda().float())
+            print('Elapsed time: {}'.format(time.time() - st))
+            idxs = np.where(scores.cpu() > 0.5)[0]
+            if visualize:
+                img = np.array(255 * unnormalize(data['img'][0, :, :, :])).copy()
 
-        configs = combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
+                img[img < 0] = 0
+                img[img > 255] = 255
 
-        retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
-        retinanet.load_state_dict(checkpoint['model'])
-        retinanet = retinanet.to(device=device)
-        retinanet.eval()
-        unnormalize = UnNormalizer()
+                img = np.transpose(img, (1, 2, 0))
+                img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2RGB)
 
-        def draw_caption(image, box, caption):
-            b = np.array(box).astype(int)
-            cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-            cv2.putText(image, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)
-
-        for idx, data in enumerate(dataloader_val):
-            scale = data['scale'][0]
-            with torch.no_grad():
-                st = time.time()
-                scores, classification, transformed_anchors = retinanet(data['img'].cuda().float())
-                print('Elapsed time: {}'.format(time.time() - st))
-                idxs = np.where(scores.cpu() > 0.5)[0]
+            detections_list = []
+            for j in range(idxs.shape[0]):
+                bbox = transformed_anchors[idxs[j], :]
                 if visualize:
-                    img = np.array(255 * unnormalize(data['img'][0, :, :, :])).copy()
-
-                    img[img < 0] = 0
-                    img[img > 255] = 255
-
-                    img = np.transpose(img, (1, 2, 0))
-                    img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2RGB)
-
-                detections_list = []
-                for j in range(idxs.shape[0]):
-                    bbox = transformed_anchors[idxs[j], :]
-                    if visualize:
-                        x1 = int(bbox[0])
-                        y1 = int(bbox[1])
-                        x2 = int(bbox[2])
-                        y2 = int(bbox[3])
-
-                    label_idx = int(classification[idxs[j]])
-                    label_name = labels[label_idx]
-                    score = scores[idxs[j]].item()
-                    if visualize:
-                        draw_caption(img, (x1, y1, x2, y2), label_name)
-                        cv2.rectangle(img, (x1, y1), (x2, y2), color=(0, 0, 255), thickness=2)
-                        print(label_name)
-
-                    # un resize for eval against gt
-                    bbox /= scale
-                    bbox.round()
                     x1 = int(bbox[0])
                     y1 = int(bbox[1])
                     x2 = int(bbox[2])
                     y2 = int(bbox[3])
-                    detections_list.append([label_name, str(score), str(x1), str(y1), str(x2), str(y2)])
-                img_name = dataset_val.image_names[idx].split('/')[-1]
-                i_name = img_name.split('.')[0]
-                filename = i_name + '.txt'
-                filepathname = os.path.join(output_path, filename)
-                with open(filepathname, 'w', encoding='utf8') as f:
-                    for single_det_list in detections_list:
-                        for i, x in enumerate(single_det_list):
-                            f.write(str(x))
-                            f.write(' ')
-                        f.write('\n')
+
+                label_idx = int(classification[idxs[j]])
+                label_name = labels[label_idx]
+                score = scores[idxs[j]].item()
                 if visualize:
-                    save_to_path = os.path.join(output_path, img_name)
-                    cv2.imwrite(save_to_path, img)
-                    cv2.waitKey(0)
-    except Exception as e:
-        os.remove(output_path)
-        logger.info(e)
+                    draw_caption(img, (x1, y1, x2, y2), label_name)
+                    cv2.rectangle(img, (x1, y1), (x2, y2), color=(0, 0, 255), thickness=2)
+                    print(label_name)
+
+                # un resize for eval against gt
+                bbox /= scale
+                bbox.round()
+                x1 = int(bbox[0])
+                y1 = int(bbox[1])
+                x2 = int(bbox[2])
+                y2 = int(bbox[3])
+                detections_list.append([label_name, str(score), str(x1), str(y1), str(x2), str(y2)])
+            img_name = dataset_val.image_names[idx].split('/')[-1]
+            i_name = img_name.split('.')[0]
+            filename = i_name + '.txt'
+            filepathname = os.path.join(output_path, filename)
+            with open(filepathname, 'w', encoding='utf8') as f:
+                for single_det_list in detections_list:
+                    for i, x in enumerate(single_det_list):
+                        f.write(str(x))
+                        f.write(' ')
+                    f.write('\n')
+            if visualize:
+                save_to_path = os.path.join(output_path, img_name)
+                cv2.imwrite(save_to_path, img)
+                cv2.waitKey(0)
 
     return output_path
 
