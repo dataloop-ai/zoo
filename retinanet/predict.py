@@ -56,7 +56,10 @@ def detect(checkpoint, output_dir, home_path=None, visualize=False):
 
     configs = combine_values(checkpoint['model_specs']['training_configs'], checkpoint['hp_values'])
     logger.info('initializing retinanet model')
-    retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
+    if checkpoint['model_specs']['training_configs']['depth'] == 50:
+        retinanet = model.resnet50(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios']) #TODO: make depth an input parameter
+    elif checkpoint['model_specs']['training_configs']['depth'] == 152:
+        retinanet = model.resnet152(num_classes=num_classes, scales=configs['anchor_scales'], ratios=configs['anchor_ratios'])
     logger.info('loading weights')
     retinanet.load_state_dict(checkpoint['model'])
     retinanet = retinanet.to(device=device)
