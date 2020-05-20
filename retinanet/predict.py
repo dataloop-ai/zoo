@@ -73,7 +73,7 @@ def detect(checkpoint, output_dir, home_path=None, visualize=False):
         scale = data['scale'][0]
         with torch.no_grad():
             st = time.time()
-            scores, classification, transformed_anchors = retinanet(data['img'].cuda().float())
+            scores, classification, transformed_anchors = retinanet(data['img'].to(device=device).float())
             print('Elapsed time: {}'.format(time.time() - st))
             idxs = np.where(scores.cpu() > 0.5)[0]
             if visualize:
@@ -149,7 +149,7 @@ def detect_single_image(checkpoint, image_path, visualize=False):
     img = img.unsqueeze(0)
     img = img.permute(0, 3, 1, 2)
     with torch.no_grad():
-        scores, classification, transformed_anchors = retinanet(img.cuda().float())
+        scores, classification, transformed_anchors = retinanet(img.to(device=device).float())
 
 
         idxs = np.where(scores.cpu() > 0.5)[0]

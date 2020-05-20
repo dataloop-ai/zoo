@@ -77,7 +77,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
         A list of lists containing the detections for each image in the generator.
     """
     all_detections = [[None for i in range(dataset.num_classes())] for j in range(len(dataset))]
-    gpu_index = [p.device.index for p in retinanet.parameters()][0]
+    device = [p.device for p in retinanet.parameters()][0]
     retinanet.eval()
     
     with torch.no_grad():
@@ -93,7 +93,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
             scale = data['scale']
 
             # run network
-            scores, labels, boxes = retinanet(data['img'].permute(2, 0, 1).cuda(device=gpu_index).float().unsqueeze(dim=0))
+            scores, labels, boxes = retinanet(data['img'].permute(2, 0, 1).to(device=device).float().unsqueeze(dim=0))
             scores = scores.cpu().numpy()
             labels = labels.cpu().numpy()
             boxes  = boxes.cpu().numpy()

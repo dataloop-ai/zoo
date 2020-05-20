@@ -98,9 +98,9 @@ class BBoxTransform(nn.Module):
             self.std = std
 
     def forward(self, boxes, deltas):
-        if deltas.is_cuda:
-            self.mean.cuda(boxes.device.index)
-            self.std.cuda(boxes.device.index)
+        device = deltas.device
+        self.mean.to(device=device)
+        self.std.to(device=device)
         widths  = boxes[:, :, 2] - boxes[:, :, 0]
         heights = boxes[:, :, 3] - boxes[:, :, 1]
         ctr_x   = boxes[:, :, 0] + 0.5 * widths

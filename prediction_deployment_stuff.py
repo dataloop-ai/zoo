@@ -63,6 +63,7 @@ if args.train:
     model.get_checkpoint()
     model.save()
 if args.predict:
+    model.load_inference(checkpoint_path='checkpoint.pt')
     model.predict()
 if args.predict_single:
     model.predict_single_image(image_path='/home/noam/0120122798.jpg')

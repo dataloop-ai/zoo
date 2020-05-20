@@ -32,7 +32,7 @@ class RetinaModel:
         if os.getcwd().split('/')[-1] == 'ObjectDetNet':
             home_path = os.path.join('..', home_path)
         self.home_path = home_path
-        self.device = torch.device(type='cuda', index=device_index)
+        self.device = torch.device(type='cuda', index=device_index) if torch.cuda.is_available() else torch.device(type='cpu')
         self.checkpoint = checkpoint
         if os.getcwd().split('/')[-1] == 'ObjectDetNet':
             this_path = os.path.join(os.getcwd(), 'retinanet')
@@ -124,7 +124,7 @@ class RetinaModel:
                                         pretrained=True)
         else:
             raise ValueError('Unsupported model depth, must be one of 18, 34, 50, 101, 152')
-        self.retinanet = retinanet.cuda(device=self.device)
+        self.retinanet = retinanet.to(device=self.device)
         self.retinanet.training = True
         self.optimizer = optim.Adam(self.retinanet.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=3, verbose=True)
@@ -160,7 +160,7 @@ class RetinaModel:
                     data = next(dataloader_iterator)
                     self.optimizer.zero_grad()
                     classification_loss, regression_loss = self.retinanet(
-                        [data['img'].cuda(device=self.device).float(), data['annot'].cuda(device=self.device)])
+                        [data['img'].to(device=self.device).float(), data['annot'].to(device=self.device)])
                     classification_loss = classification_loss.mean()
                     regression_loss = regression_loss.mean()
                     loss = classification_loss + regression_loss
