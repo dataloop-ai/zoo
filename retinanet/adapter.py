@@ -62,7 +62,7 @@ class AdapterModel:
         self.path = os.getcwd()
         self.output_path = os.path.join(self.path, 'output')
         # unify training configs and hp_values
-        self.configs = combine_values(self.model_specs['training_configs'], hp_values)
+        self.configs = combine_values(self.model_specs['training_configs'], hp_values) #TODO: replace with dict.update()
 
         self.classes_filepath = None
         self.annotations_train_filepath = None
