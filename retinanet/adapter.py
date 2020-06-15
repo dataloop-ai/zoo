@@ -16,11 +16,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def combine_values(configs_under, configs_over):
-    for hp in configs_over.keys():
-        configs_under[hp] = configs_over[hp]
+#def combine_values(configs_under, configs_over):
+#    for hp in configs_over.keys():
+#        configs_under[hp] = configs_over[hp]
 
-    return configs_under
+#   return configs_under
 
 def generate_trial_id():
     s = str(time.time()) + str(random.randint(1, 1e7))
@@ -57,13 +57,16 @@ class AdapterModel:
         self.devices = devices
         self.model_specs = model_specs
         self.hp_values = hp_values
-
+     
         self.annotation_type = model_specs['data']['annotation_type']
         self.path = os.getcwd()
         self.output_path = os.path.join(self.path, 'output')
-        # unify training configs and hp_values
-        self.configs = combine_values(self.model_specs['training_configs'], hp_values) #TODO: replace with dict.update()
-
+        
+        # unify training configs and hp_values using dict.update
+        #self.configs = combine_values(self.model_specs['training_configs'], hp_values) 
+        self.model_specs['training_configs'].update(hp_values)
+        self.configs = self.model_specs['training_configs']
+        
         self.classes_filepath = None
         self.annotations_train_filepath = None
         self.annotations_val_filepath = None
